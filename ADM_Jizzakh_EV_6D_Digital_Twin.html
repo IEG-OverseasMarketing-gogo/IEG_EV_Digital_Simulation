@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADM Jizzakh — EV Line 6D Digital Twin · Robot Predictive Maintenance Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E161D;
+    --panel:#141F29;
+    --panel-2:#182530;
+    --line:#26343F;
+    --amber:#FFB020;
+    --cyan:#3DDBD9;
+    --alert:#E8492B;
+    --green:#4CC38A;
+    --text:#E9EDF1;
+    --muted:#8FA0AC;
+    --mono: 'IBM Plex Mono', monospace;
+    --disp: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
+  ::selection{background:var(--amber);color:#12140f;}
+  a{color:var(--cyan);}
+
+  header.top{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(180deg,#0E161D 0%, #0E161DE0 100%);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:14px 22px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .mark{
+    width:34px;height:34px;border-radius:7px;
+    background:conic-gradient(from 220deg, var(--amber), var(--cyan), var(--amber));
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:600;color:#0E161D;font-size:12px;
+  }
+  .brand h1{font-family:var(--disp);font-size:16px;margin:0;letter-spacing:0.2px;}
+  .brand .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.4px;text-transform:uppercase;}
+
+  nav.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;}
+  nav.tabs button{
+    font-family:var(--disp);font-size:13px;font-weight:600;
+    background:transparent;border:none;color:var(--muted);
+    padding:8px 14px;border-radius:7px;cursor:pointer;transition:all .15s ease;
+  }
+  nav.tabs button:hover{color:var(--text);}
+  nav.tabs button.active{background:var(--amber);color:#1a1200;}
+
+  main{max-width:1440px;margin:0 auto;padding:20px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .sim-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;}
+  @media (max-width:980px){.sim-grid{grid-template-columns:1fr;}}
+
+  /* ===== Digital-twin stage (schematic, not photo) ===== */
+  .stage{
+    position:relative;background:#000;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;height:560px;
+  }
+  .bg-grid{position:absolute;inset:0;background:#808080;}
+  #cell-diagram{position:absolute;inset:0;}
+  .cellsvg{position:absolute;inset:0;width:100%;height:100%;}
+  .conveyor{stroke:var(--line);stroke-width:2;stroke-dasharray:6 6;}
+  .pallet{fill:var(--panel-2);stroke:var(--cyan);stroke-width:1;
+    transform-box:fill-box;transform-origin:center;animation:palletMove 4s linear infinite;}
+  @keyframes palletMove{0%{transform:translateX(0);}100%{transform:translateX(300px);}}
+  .wobj-outline{fill:none;stroke:var(--muted);stroke-width:2;opacity:.55;}
+  .wobj-cell{stroke:var(--muted);stroke-width:1;opacity:.4;}
+  .hv-ribbon{fill:var(--alert);opacity:.9;}
+  .hv-text{fill:#1a0a06;font-family:var(--mono);font-size:9px;font-weight:700;}
+  .robotarm .rlink{stroke:var(--amber);stroke-linecap:round;fill:none;}
+  .robotarm .rbase{fill:var(--panel-2);stroke:var(--line);}
+  .rjoint{fill:#0E161D;stroke:var(--amber);stroke-width:2;}
+  .sensor-dot{fill:var(--green);filter:drop-shadow(0 0 4px var(--green));animation:sensorPulse 2.4s ease-in-out infinite;}
+  .sensor-dot.warn{fill:var(--alert);filter:drop-shadow(0 0 6px var(--alert));animation:sensorPulse .7s ease-in-out infinite;}
+  @keyframes sensorPulse{0%,100%{r:5;opacity:1;}50%{r:7;opacity:.6;}}
+  .cell-label{font-family:var(--mono);font-size:9px;fill:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+
+  .stage-shade{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg, rgba(9,13,17,.55) 0%, rgba(9,13,17,.02) 22%, rgba(9,13,17,.02) 58%, rgba(9,13,17,.9) 100%);
+  }
+  .stage-shade.alert-wash{background:
+    linear-gradient(180deg, rgba(9,13,17,.55) 0%, rgba(9,13,17,.02) 22%, rgba(9,13,17,.02) 58%, rgba(9,13,17,.9) 100%),
+    radial-gradient(120% 120% at 50% 50%, rgba(232,73,43,0) 55%, rgba(232,73,43,.28) 100%);
+  }
+
+  .scanline{position:absolute;left:2%;right:2%;height:2px;top:8%;
+    background:linear-gradient(90deg, transparent, #3DDBD9CC 20%, #3DDBD9CC 80%, transparent);
+    box-shadow:0 0 16px 2px #3DDBD988;pointer-events:none;opacity:.75;
+    animation:scan 5s linear infinite;
+  }
+  @keyframes scan{0%{top:9%;}100%{top:88%;}}
+
+  .bracket{position:absolute;border:2px solid var(--cyan);border-radius:8px;
+    left:29%;top:16%;width:44%;height:68%;
+    box-shadow:0 0 22px #3DDBD955 inset, 0 0 10px #3DDBD944;
+    transition:border-color .3s ease, box-shadow .3s ease;
+    pointer-events:none;
+  }
+  .bracket::before,.bracket::after,.bracket i::before,.bracket i::after{content:'';position:absolute;width:12px;height:12px;border:2px solid var(--cyan);}
+  .bracket::before{top:-2px;left:-2px;border-right:none;border-bottom:none;}
+  .bracket::after{top:-2px;right:-2px;border-left:none;border-bottom:none;}
+  .bracket i{display:block;}
+  .bracket i::before{bottom:-2px;left:-2px;border-right:none;border-top:none;}
+  .bracket i::after{bottom:-2px;right:-2px;border-left:none;border-top:none;}
+  .bracket.fault{border-color:var(--alert);box-shadow:0 0 26px #E8492B77 inset;animation:pulseAlert 1s ease-in-out infinite;}
+  .bracket.fault::before,.bracket.fault::after,.bracket.fault i::before,.bracket.fault i::after{border-color:var(--alert);}
+  @keyframes pulseAlert{0%,100%{box-shadow:0 0 10px #E8492B55 inset;}50%{box-shadow:0 0 30px #E8492Bcc inset;}}
+
+  .bracket .tag{position:absolute;top:-27px;left:-2px;font-family:var(--mono);font-size:10px;
+    background:#0B1116E6;border:1px solid var(--cyan);color:var(--cyan);padding:3px 8px;border-radius:5px;white-space:nowrap;
+  }
+  .bracket.fault .tag{border-color:var(--alert);color:var(--alert);}
+
+  .hud{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;z-index:5;}
+  .hud-cluster{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-family:var(--mono);font-size:11px;background:#0B1116CC;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--muted);pointer-events:auto;}
+  .chip b{color:var(--text);font-weight:600;}
+  button.chip{appearance:none;-webkit-appearance:none;}
+  button.chip:hover{border-color:var(--cyan);}
+  button.chip.muted b{color:var(--muted);}
+
+  .stagefoot{position:absolute;bottom:0;left:0;right:0;z-index:5;
+    padding:30px 14px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;
+  }
+  .kpis{display:flex;gap:18px;flex-wrap:wrap;}
+  .kpi{font-family:var(--mono);}
+  .kpi .val{font-size:20px;font-weight:600;color:var(--amber);}
+  .kpi.alertval .val{color:var(--alert);}
+  .kpi .lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  .stationdots{display:flex;gap:8px;}
+  .sdot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+  .sdot.warn{background:var(--alert);box-shadow:0 0 8px var(--alert);}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+    display:flex;flex-direction:column;gap:14px;height:560px;overflow-y:auto;
+  }
+  .panel h2{font-family:var(--disp);font-size:15px;margin:0 0 2px 0;}
+  .eyebrow{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+
+  .stationpicker{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .stationpicker button{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--muted);
+    font-family:var(--body);font-size:11.5px;font-weight:600;padding:9px 4px;cursor:pointer;text-align:center;line-height:1.3;}
+  .stationpicker button .n{display:block;font-family:var(--mono);font-size:10px;color:var(--cyan);}
+  .stationpicker button.active{border-color:var(--amber);color:var(--text);background:#221A0C;}
+
+  select,.btn{width:100%;font-family:var(--body);font-size:13px;padding:10px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);}
+  .btn{cursor:pointer;font-weight:600;text-align:center;transition:all .15s ease;}
+  .btn.primary{background:var(--amber);color:#1a1200;border-color:var(--amber);}
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn.ghost:hover{border-color:var(--muted);}
+  .btn.danger{background:transparent;border-color:var(--alert);color:var(--alert);}
+  .btn.danger:hover{background:#2A1310;}
+  .row{display:flex;gap:8px;}
+  .row>*{flex:1;}
+
+  .diagbox{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;line-height:1.5;}
+  .diagbox .tag2{display:inline-block;font-family:var(--mono);font-size:10px;background:#1C2731;border:1px solid var(--line);padding:2px 7px;border-radius:5px;color:var(--muted);margin-bottom:6px;}
+  .options label{display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--line);border-radius:8px;margin-top:6px;cursor:pointer;font-size:12.5px;background:var(--panel);}
+  .options label:hover{border-color:var(--cyan);}
+  .options label input{margin-top:3px;}
+  .result{margin-top:10px;padding:10px;border-radius:8px;font-size:12.5px;line-height:1.55;display:none;}
+  .result.show{display:block;}
+  .result.correct{background:#0F2A1E;border:1px solid var(--green);}
+  .result.wrong{background:#2A1614;border:1px solid var(--alert);}
+
+  .legend{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);}
+  .legend div{display:flex;gap:8px;align-items:center;}
+  .sw{width:11px;height:11px;border-radius:3px;flex:none;}
+
+  .trendbox{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .trendsvg{width:100%;height:60px;display:block;}
+  .threshold-line{stroke:var(--alert);stroke-width:1;stroke-dasharray:3 3;opacity:.6;}
+  .trend-poly{fill:none;stroke:var(--cyan);stroke-width:1.6;}
+  .trend-poly.critical{stroke:var(--alert);}
+  .trend-readout{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;}
+  .trend-readout b{color:var(--text);}
+
+  .doc{max-width:980px;margin:0 auto;}
+  .doc-hero{padding:28px 0 18px;border-bottom:1px solid var(--line);margin-bottom:26px;}
+  .doc-hero .eyebrow{margin-bottom:8px;}
+  .doc-hero h2{font-family:var(--disp);font-size:28px;margin:0 0 10px;}
+  .doc-hero p{color:var(--muted);max-width:680px;font-size:14.5px;line-height:1.6;margin:0;}
+  .metarow{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap;}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .meta b{display:block;color:var(--amber);font-size:14px;font-family:var(--disp);}
+
+  .module{border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden;background:var(--panel);}
+  .module summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;}
+  .module summary::-webkit-details-marker{display:none;}
+  .module summary .mtitle{display:flex;gap:14px;align-items:baseline;}
+  .module summary .mnum{font-family:var(--mono);color:var(--cyan);font-size:13px;min-width:26px;}
+  .module summary h3{font-family:var(--disp);font-size:16px;margin:0;font-weight:600;}
+  .module summary .mdur{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+  .module[open] summary{border-bottom:1px solid var(--line);}
+  .module .mbody{padding:18px;display:flex;flex-direction:column;gap:16px;}
+
+  .subhead{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin:0 0 8px;}
+  ul.clean{margin:0;padding-left:18px;font-size:13.5px;line-height:1.65;color:#D7DEE4;}
+  ul.clean li{margin-bottom:5px;}
+  ol.clean{margin:0;padding-left:18px;font-size:13.5px;line-height:1.65;color:#D7DEE4;}
+  ol.clean li{margin-bottom:6px;}
+  p.body-p{font-size:13.5px;line-height:1.7;color:#D7DEE4;margin:0;}
+
+  table.spec{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.spec th{text-align:left;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--line);}
+  table.spec td{padding:8px 8px;border-bottom:1px solid #1C2731;color:#D7DEE4;vertical-align:top;}
+  table.spec tr:last-child td{border-bottom:none;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+  .callout{border-left:3px solid var(--cyan);background:#101C24;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;color:#D7DEE4;}
+  .callout.amber{border-color:var(--amber);background:#1C1608;}
+  .callout.alert{border-color:var(--alert);background:#211010;}
+
+  footer{max-width:1440px;margin:30px auto 60px;padding:20px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;font-family:var(--mono);}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="mark">6D</div>
+    <div>
+      <h1>EV Line Digital Twin — Robot Predictive Maintenance Training</h1>
+      <div class="sub">ADM Jizzakh Training Center · Uzbekistan · Kia EV5/EV6 &amp; BYD Robotic Assembly Line</div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button data-view="sim" class="active">Simulator</button>
+    <button data-view="curriculum">Curriculum</button>
+    <button data-view="instructor">Instructor Guide</button>
+  </nav>
+</header>
+
+<main>
+
+  <section id="view-sim" class="view active">
+
+    <div class="callout amber" style="margin-bottom:14px;">
+      <b>What "6D" means here:</b> this program extends the standard five-dimension digital-twin model used in smart-manufacturing research — Physical Entity (the real robot cell), Virtual Entity (this schematic mirror), Services (the diagnostic tools you're using), Twin Data (live sensor telemetry), and Connections (the data links tying it together) — with a <b>sixth dimension: Prognostics</b>. Because most of an EV line is robotic, the question trainees need to answer usually isn't "what broke," it's "which sensor trend tells me a robot is about to need attention, and how much useful life is left before it does."
+    </div>
+
+    <div class="sim-grid">
+      <div class="stage" id="stage">
+        <div class="bg-grid"></div>
+        <div id="cell-diagram"></div>
+        <div class="stage-shade" id="stage-shade"></div>
+        <div class="scanline"></div>
+        <div class="bracket" id="bracket"><i></i><span class="tag" id="bracket-tag">WELD ROBOT R14 · OK</span></div>
+
+        <div class="hud">
+          <div class="hud-cluster">
+            <div class="chip">SOURCE: <b>Sensor Fusion · ADM Jizzakh Line 1</b></div>
+            <div class="chip" id="hud-clock">T+00:00</div>
+          </div>
+          <div class="hud-cluster">
+            <div class="chip" id="hud-state">STATE: <b>RUNNING</b></div>
+            <button class="chip" id="sound-toggle" style="cursor:pointer;">🔊 SOUND: <b id="sound-label">ON</b></button>
+          </div>
+        </div>
+        <div class="stagefoot">
+          <div class="kpis">
+            <div class="kpi"><div class="val" id="kpi-cycle">38s</div><div class="lab">Cycle Time</div></div>
+            <div class="kpi"><div class="val" id="kpi-uph">92</div><div class="lab">Units / Hr</div></div>
+            <div class="kpi alertval"><div class="val" id="kpi-oee">93%</div><div class="lab">OEE</div></div>
+            <div class="kpi"><div class="val" id="kpi-health">12</div><div class="lab">Health Index</div></div>
+          </div>
+          <div class="stationdots" id="station-dots">
+            <div class="sdot" data-s="0" title="Body Assembly"></div>
+            <div class="sdot" data-s="1" title="Battery Pack (HV)"></div>
+            <div class="sdot" data-s="2" title="Paint"></div>
+            <div class="sdot" data-s="3" title="Marriage"></div>
+            <div class="sdot" data-s="4" title="Quality"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div>
+          <div class="eyebrow">01 — Select Robot Cell</div>
+          <h2>Focus the Digital Twin</h2>
+        </div>
+        <div class="stationpicker" id="stationpicker">
+          <button data-s="0" class="active"><span class="n">ST-01</span>BIW Weld</button>
+          <button data-s="1"><span class="n">ST-02</span>Battery (HV)</button>
+          <button data-s="2"><span class="n">ST-03</span>Paint</button>
+          <button data-s="3"><span class="n">ST-04</span>Marriage</button>
+          <button data-s="4"><span class="n">ST-05</span>Quality</button>
+        </div>
+
+        <div>
+          <div class="eyebrow">02 — Legend</div>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div>
+          <div class="eyebrow">03 — Predictive Maintenance Lab</div>
+          <p class="body-p" style="margin-bottom:8px;">Inject a realistic robot degradation trend into the selected cell and diagnose it the way a predictive-maintenance technician would: trend first, threshold second, root cause third.</p>
+          <select id="scenario-select"></select>
+          <div class="row" style="margin-top:8px;">
+            <button class="btn primary" id="inject-btn">Inject Drift</button>
+            <button class="btn ghost" id="reset-btn">Reset Cell</button>
+          </div>
+        </div>
+
+        <div id="diag-area"></div>
+
+        <div>
+          <div class="eyebrow">04 — Predictive Health Trend</div>
+          <div class="trendbox">
+            <svg viewBox="0 0 200 60" class="trendsvg">
+              <line x1="0" y1="12.8" x2="200" y2="12.8" class="threshold-line"/>
+              <polyline id="trend-poly" class="trend-poly" points=""/>
+            </svg>
+            <div class="trend-readout" id="trend-readout">Health Index: 12 · Status: Nominal<br>Predicted RUL: —</div>
+          </div>
+        </div>
+
+        <div>
+          <button class="btn danger" id="cascade-btn">Run Predictive-Miss Cascade Demo</button>
+          <p class="body-p" style="margin-top:8px;font-size:12px;color:var(--muted);">Simulates a real predictive-maintenance signal at the Battery (HV) cell that nobody watches — it doesn't trip an alarm, it surfaces three units later as a Quality-station HV test anomaly.</p>
+        </div>
+      </div>
+    </div>
+    <p class="body-p" style="margin-top:10px;color:var(--muted);font-size:11.5px;">Stage imagery is a schematic digital-twin wireframe, not stock photography — sensor markers, brackets, and telemetry are illustrative training overlays, not live plant data.</p>
+  </section>
+
+  <section id="view-curriculum" class="view">
+    <div class="doc">
+      <div class="doc-hero">
+        <div class="eyebrow">TVET Curriculum · EV Robotic Line Predictive Maintenance Track</div>
+        <h2>ADM Jizzakh EV Robot Technician Program</h2>
+        <p>A hands-on program for the ADM Jizzakh training center (Uzbekistan) built around a simple premise: on a Kia EV5/EV6 or BYD line, almost every station is a robot cell, so the technician's real job is reading a robot's own sensor trends early enough to act before a hard failure — not waiting for an alarm.</p>
+        <div class="metarow">
+          <div class="meta"><b>~24.5 hrs</b>Total program length</div>
+          <div class="meta"><b>5 cells</b>BIW · Battery(HV) · Paint · Marriage · Quality</div>
+          <div class="meta"><b>15</b>Scenario-based diagnostics</div>
+          <div class="meta"><b>1</b>Cross-station cascade capstone</div>
+        </div>
+      </div>
+
+      <details class="module" open>
+        <summary>
+          <div class="mtitle"><span class="mnum">M1</span><h3>Orientation — Reading a Robot Line as a Technician</h3></div>
+          <div class="mdur">2.5 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Learning Objectives</div>
+            <ul class="clean">
+              <li>Describe the ADM Jizzakh line layout: BIW welding, HV battery-pack assembly, paint/e-coat, motor-battery marriage, and EOL quality — all robot- or cobot-driven.</li>
+              <li>Explain the difference between reactive maintenance (fix after failure), preventive maintenance (fix on a fixed calendar), and predictive maintenance (fix based on a measured trend approaching a threshold).</li>
+              <li>Explain the 6D digital-twin framing used throughout the simulator, and why "Prognostics" is treated as its own dimension, not a footnote to "Data."</li>
+            </ul>
+          </div>
+          <div>
+            <div class="subhead">Assessment</div>
+            <p class="body-p">Guided simulator tour + short quiz distinguishing reactive / preventive / predictive maintenance from written scenario descriptions.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary>
+          <div class="mtitle"><span class="mnum">M2</span><h3>Station 1 — BIW Robotic Welding Cell</h3></div>
+          <div class="mdur">3.5 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Technical Content</div>
+            <table class="spec">
+              <tr><th>Component</th><th>Function</th><th>Predictive Signal</th></tr>
+              <tr><td>Servo weld-gun ball-screw</td><td>Drives gun closing force/travel</td><td>Closing-time &amp; force-setpoint trend</td></tr>
+              <tr><td>Wrist (J6) bearing</td><td>Final-axis positioning</td><td>Vibration RMS trend vs. ISO-style severity bands</td></tr>
+              <tr><td>Dress-pack cabling</td><td>Power/signal to end effector</td><td>CRC/comms error rate vs. cumulative flex cycles</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="subhead">Note on scope</div>
+            <p class="body-p">Kia EV5/EV6 unibody geometry is referenced for context. Until OEM-specific weld schedules and fixture data are shared through the ADM Jizzakh partnership, this module stays brand-agnostic: the diagnostic logic transfers to any comparable spot-weld robot cell.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary>
+          <div class="mtitle"><span class="mnum">M3</span><h3>Station 2 — Battery Pack Robotic Assembly (HV)</h3></div>
+          <div class="mdur">4.5 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Technical Content</div>
+            <table class="spec">
+              <tr><th>Component</th><th>Function</th><th>Predictive Signal</th></tr>
+              <tr><td>Torque robot end-effector bit</td><td>Fastens HV pack-mount bolts</td><td>Achieved-torque distribution trend, not just pass/fail</td></tr>
+              <tr><td>Pack-lift positioning robot</td><td>Places pack under body</td><td>Placement repeatability spread trend</td></tr>
+              <tr><td>HV connector mating-force sensor</td><td>Confirms full connector seating</td><td>Force-baseline drift on the sensor itself</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="subhead">Instructor Focus</div>
+            <p class="body-p">Do not skip the HV lockout/tagout briefing before hands-on work — this is the only module touching high-voltage battery systems (Kia EV5/EV6 packs and BYD Blade-style packs). Emphasize that on HV joints, a sensor that silently drifts is itself a safety risk, not just a quality one.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary>
+          <div class="mtitle"><span class="mnum">M4</span><h3>Station 3 — Paint / E-Coat Robotic Cell</h3></div>
+          <div class="mdur">3.5 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Technical Content</div>
+            <table class="spec">
+              <tr><th>Component</th><th>Function</th><th>Predictive Signal</th></tr>
+              <tr><td>Bell-cup bearing</td><td>Spins atomizer for spray</td><td>Rotational-speed variance / film-thickness variance trend</td></tr>
+              <tr><td>Wrist seal</td><td>Protects joint from paint ingress</td><td>Wrist-axis friction/current signature trend</td></tr>
+              <tr><td>Base-axis (J1) reducer</td><td>Widest sweep motion</td><td>Sweep-path deviation trend from vision system</td></tr>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary>
+          <div class="mtitle"><span class="mnum">M5</span><h3>Station 4 — Final Marriage &amp; Motor-Battery Mount Cell</h3></div>
+          <div class="mdur">4 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Technical Content</div>
+            <table class="spec">
+              <tr><th>Component</th><th>Function</th><th>Predictive Signal</th></tr>
+              <tr><td>Lift servo drive encoder</td><td>Positions body/pack lift</td><td>Feedback noise floor &amp; correction-retry rate</td></tr>
+              <tr><td>Fastening robot spindle bearing</td><td>Torques structural/mount fasteners</td><td>Motor current at fixed torque setpoint</td></tr>
+              <tr><td>Vision-guided alignment camera</td><td>Aligns motor/pack to body</td><td>Alignment offset vs. enclosure temperature</td></tr>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary>
+          <div class="mtitle"><span class="mnum">M6</span><h3>Station 5 — EOL Quality: Vision &amp; HV Functional Test Cell</h3></div>
+          <div class="mdur">3.5 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Technical Content</div>
+            <table class="spec">
+              <tr><th>Component</th><th>Function</th><th>Predictive Signal</th></tr>
+              <tr><td>Robot-mounted vision camera</td><td>Final part-presence/appearance check</td><td>Calibration drift vs. false-reject rate</td></tr>
+              <tr><td>Six-axis force/torque sensor</td><td>HV functional test on the robot arm</td><td>Zero-offset drift trend</td></tr>
+              <tr><td>EOL robot arm (fleet health)</td><td>Handles/tests every unit</td><td>Long-horizon repeatability trend across accumulated cycles</td></tr>
+            </table>
+          </div>
+          <div>
+            <div class="subhead">Instructor Focus</div>
+            <p class="body-p">Reinforce that Quality-station data is a diagnostic window into every upstream robot cell, not just a pass/fail gate — the capstone cascade is built on this exact idea.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary>
+          <div class="mtitle"><span class="mnum">M7</span><h3>Capstone — Cross-Station Predictive-Miss Cascade</h3></div>
+          <div class="mdur">3 hrs ▸</div>
+        </summary>
+        <div class="mbody">
+          <div>
+            <div class="subhead">Format</div>
+            <p class="body-p">Run the "Predictive-Miss Cascade Demo" as a class, then have pairs trace the Quality-station anomaly back to the Battery(HV) cell's torque-bit-wear trend using the MES build record, build a 5-Why chain, and propose a condition-based-monitoring (CBM) fix — not just a corrective action.</p>
+          </div>
+          <div>
+            <div class="subhead">Assessment</div>
+            <p class="body-p">Scored against the Capstone Rubric in the Instructor Guide, §5.</p>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <section id="view-instructor" class="view">
+    <div class="doc">
+      <div class="doc-hero">
+        <div class="eyebrow">Facilitator Reference</div>
+        <h2>Instructor Guide</h2>
+        <p>Delivery notes, the full scenario answer key, and the capstone rubric for the ADM Jizzakh EV robot predictive-maintenance program.</p>
+      </div>
+
+      <details class="module" open>
+        <summary><div class="mtitle"><span class="mnum">§1</span><h3>Program at a Glance</h3></div></summary>
+        <div class="mbody">
+          <table class="spec">
+            <tr><th>Module</th><th>Format</th><th>Time</th><th>Instructor Focus</th></tr>
+            <tr><td>M1 Orientation</td><td>Lecture + guided simulator tour</td><td>2.5 hrs</td><td>Land the reactive/preventive/predictive distinction before anything else — everything downstream depends on it.</td></tr>
+            <tr><td>M2 BIW Weld</td><td>Lecture + paired lab</td><td>3.5 hrs</td><td>Physically demonstrate a worn vs. new electrode/bit if available; ties an abstract trend to a real object.</td></tr>
+            <tr><td>M3 Battery (HV)</td><td>Lecture + paired lab + HV safety briefing</td><td>4.5 hrs</td><td>Do not skip lockout/tagout — the only module touching HV battery systems.</td></tr>
+            <tr><td>M4 Paint</td><td>Lecture + paired lab</td><td>3.5 hrs</td><td>Emphasize that some drift is environment-driven (ambient), not just mechanical wear.</td></tr>
+            <tr><td>M5 Marriage</td><td>Lecture + paired lab</td><td>4.0 hrs</td><td>Highlight the thermal-drift scenario — it's a pattern, not a random fault, once logged against temperature.</td></tr>
+            <tr><td>M6 Quality</td><td>Lecture + paired lab</td><td>3.5 hrs</td><td>Reinforce that Quality data diagnoses upstream cells; it isn't only a gate.</td></tr>
+            <tr><td>M7 Capstone</td><td>Workshop + group presentation</td><td>3.0 hrs</td><td>Run as one extended session — the cascade loses impact if split across days.</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary><div class="mtitle"><span class="mnum">§2</span><h3>Materials &amp; Setup Checklist</h3></div></summary>
+        <div class="mbody">
+          <ul class="clean">
+            <li>Laptop or tablet per pair, modern browser (Chrome/Edge/Safari), no install required — this HTML file runs standalone.</li>
+            <li>Projector/large display for whole-class walkthroughs of Modules 1 and 7.</li>
+            <li>Printed or digital trainee logsheet for recording each scenario's trend signal, diagnosis, and predicted RUL.</li>
+            <li>Optional physical props: a worn vs. new torque bit, a bearing cutaway, or a vibration-sensor demo unit significantly improves retention when paired with the digital-twin scenario.</li>
+            <li>Whiteboard or flip chart for live 5-Why construction in Module 7.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary><div class="mtitle"><span class="mnum">§3</span><h3>Common Trainee Misconceptions</h3></div></summary>
+        <div class="mbody">
+          <div class="callout alert"><b>"If there's no alarm, nothing is wrong."</b><br>Directly address this before Module 7. Every scenario in this program is defined by having no hard fault — that's the entire point of predictive maintenance.</div>
+          <div class="callout alert"><b>"A robot cell means there's nothing for a technician to diagnose."</b><br>Reinforce the program's core premise: automation changes <i>who</i> generates the diagnostic signal (the robot's own sensors, not a human's eyes), not <i>whether</i> diagnosis is needed.</div>
+          <div class="callout alert"><b>"Predictive and preventive maintenance are the same thing."</b><br>Preventive maintenance acts on a fixed calendar or cycle count regardless of condition. Predictive maintenance acts on a measured trend approaching a threshold. Several scenarios (e.g., ST-01 dress-pack fatigue) show both operating together — a rated flex life <i>and</i> a live error-rate trend.</div>
+          <div class="callout alert"><b>"A sensor reading 'pass' means the component is fine."</b><br>Several scenarios (torque bit wear, HV force-sensor drift, EOL zero-offset drift) show a sensor reporting a technically valid pass while the underlying trend quietly approaches a threshold — including cases where the sensor itself, not the process, is what's drifting.</div>
+        </div>
+      </details>
+
+      <details class="module" open>
+        <summary><div class="mtitle"><span class="mnum">§4</span><h3>Simulator Scenario Answer Key</h3></div></summary>
+        <div class="mbody">
+          <p class="body-p">Full explanations trainees see on screen after answering are reproduced here for quick instructor reference during debrief.</p>
+
+          <div class="subhead">Station 1 — BIW Robotic Welding Cell</div>
+          <table class="spec">
+            <tr><th>Scenario</th><th>Correct Root Cause</th><th>Corrective Action</th><th>Predictive / CBM Interval</th></tr>
+            <tr><td>Servo Weld-Gun Ball-Screw Wear</td><td>Ball-screw wear raises mechanical backlash/friction, so closing time and force setpoint both trend up with no fault code.</td><td>Inspect ball-screw play/lubrication; plan replacement at the next stop if trend continues.</td><td>Trend closing-time and force-setpoint against a condition-based limit; est. 2–3 weeks RUL at typical drift rates.</td></tr>
+            <tr><td>Wrist (J6) Bearing Vibration Trend</td><td>Bearing wear raises vibration amplitude before it ever affects weld placement.</td><td>Log a work order for bearing inspection at the next changeover.</td><td>ISO-style vibration severity bands; est. 7–10 operating days to the "alert" band at current trend.</td></tr>
+            <tr><td>Dress-Pack Cable Flex Fatigue</td><td>Repeated flexing fatigues conductors; error rate rises with cumulative motion cycles.</td><td>Replace dress-pack at the next planned stop if the trend is accelerating.</td><td>Track cumulative flex cycles vs. rated flex life; pre-order replacement lead time.</td></tr>
+          </table>
+
+          <div class="subhead">Station 2 — Battery Pack Robotic Assembly (HV)</div>
+          <table class="spec">
+            <tr><th>Scenario</th><th>Correct Root Cause</th><th>Corrective Action</th><th>Predictive / CBM Interval</th></tr>
+            <tr><td>Torque Robot End-Effector Bit Wear</td><td>A worn driver bit slips under load, so achieved torque drifts down while the tool still reports "pass."</td><td>Replace the bit; audit recent HV-mount joints with a calibrated hand tool.</td><td>Trend achieved-torque distribution per bit-cycle count with a tighter safety-critical CBM limit.</td></tr>
+            <tr><td>Pack-Lift Positioning Robot — Harmonic Drive Backlash</td><td>Backlash growth widens placement repeatability well before an outright tolerance miss.</td><td>Schedule drive service; tighten the in-process repeatability alert band.</td><td>Trend repeatability spread per motion-cycle count against the drive's backlash-growth curve.</td></tr>
+            <tr><td>HV Connector Mating-Force Sensor Drift</td><td>The force sensor's own baseline is drifting, risking a masked under-seated HV connection.</td><td>Recalibrate the sensor against a certified reference immediately.</td><td>Shorter calibration-verification interval for HV-critical sensors than for general process sensors.</td></tr>
+          </table>
+
+          <div class="subhead">Station 3 — Paint / E-Coat Robotic Cell</div>
+          <table class="spec">
+            <tr><th>Scenario</th><th>Correct Root Cause</th><th>Corrective Action</th><th>Predictive / CBM Interval</th></tr>
+            <tr><td>Bell-Cup Bearing Wear</td><td>Bearing wear reduces rotational-speed consistency, degrading atomization gradually.</td><td>Replace bearing per wear schedule; verify rotational speed against spec.</td><td>Trend rotational-speed variance in run-hours against the bearing's wear curve.</td></tr>
+            <tr><td>Robot Wrist Seal Degradation</td><td>Seal wear allows paint ingress, raising joint friction/current before a hard jam.</td><td>Replace seal; inspect for internal paint ingress.</td><td>Trend wrist-axis current/friction signature per operating hour vs. seal life spec.</td></tr>
+            <tr><td>Base-Axis (J1) Reducer Wear</td><td>Reducer wear introduces a small, growing path deviation on the highest-load axis.</td><td>Inspect/service reducer; verify path with a laser tracker.</td><td>Trend path deviation per operating hour against the reducer's wear curve.</td></tr>
+          </table>
+
+          <div class="subhead">Station 4 — Final Marriage &amp; Motor-Battery Mount Cell</div>
+          <table class="spec">
+            <tr><th>Scenario</th><th>Correct Root Cause</th><th>Corrective Action</th><th>Predictive / CBM Interval</th></tr>
+            <tr><td>Lift Servo Drive Encoder Degradation</td><td>Encoder degradation raises feedback noise floor, occasionally under-shooting lift position.</td><td>Replace/inspect encoder; verify lift repeatability.</td><td>Trend noise floor and correction-retry rate against a CBM alert threshold.</td></tr>
+            <tr><td>Fastening Robot Spindle Bearing Wear</td><td>Bearing wear raises friction, so more current is needed to hit the same torque setpoint.</td><td>Replace spindle bearing at the next planned stop.</td><td>Trend current-at-setpoint per cycle count against the bearing's wear curve.</td></tr>
+            <tr><td>Vision-Guided Alignment Camera Thermal Drift</td><td>Camera calibration drifts thermally as the cell enclosure heats up through the shift.</td><td>Add thermal compensation or recalibrate on a temperature-keyed schedule.</td><td>Log offset vs. enclosure temperature to build a compensation curve.</td></tr>
+          </table>
+
+          <div class="subhead">Station 5 — EOL Quality: Vision &amp; HV Functional Test Cell</div>
+          <table class="spec">
+            <tr><th>Scenario</th><th>Correct Root Cause</th><th>Corrective Action</th><th>Predictive / CBM Interval</th></tr>
+            <tr><td>Robot-Mounted Vision Camera Calibration Drift</td><td>Lighting/lens calibration shifted, changing the false-reject/false-accept threshold.</td><td>Recalibrate against a reference target; re-inspect held units.</td><td>Scheduled calibration checks; monitor ambient lighting trend, not just reject-rate spikes.</td></tr>
+            <tr><td>Six-Axis Force/Torque Sensor Zero-Offset Drift</td><td>Sensor zero-offset creep inflates false-fail retests on the HV functional test.</td><td>Rezero/recalibrate sensor; clear the false-fail queue.</td><td>Trend the zero-offset itself against the sensor's calibration-life spec.</td></tr>
+            <tr><td>Robot Arm Repeatability Degradation (Fleet Health)</td><td>Accumulated unlogged micro-collisions gradually widen repeatability — no single event caused it.</td><td>Full recalibration/TCP re-teach; review changeover procedures.</td><td>Track long-horizon (weeks/months) repeatability trend as its own KPI, separate from shift metrics.</td></tr>
+          </table>
+
+          <div class="subhead">Predictive-Miss Cascade Demo</div>
+          <p class="body-p">The scripted scenario introduces sub-threshold torque-bit wear at the Battery (HV) cell that does <b>not</b> trigger an alarm there, but produces an intermittent HV functional-test anomaly at the Quality cell three units later. Correct trainee reasoning: trace the Quality anomaly via the MES build record back to the Battery-cell torque trend — don't treat it as a Quality-station sensor problem. This is the single learning moment the capstone is built around; spend extra debrief time here.</p>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary><div class="mtitle"><span class="mnum">§5</span><h3>Capstone Assessment Rubric (M7)</h3></div></summary>
+        <div class="mbody">
+          <table class="spec">
+            <tr><th>Criterion</th><th>Weight</th><th>Meets Standard</th></tr>
+            <tr><td>Correct detection method (trend, not alarm)</td><td>20%</td><td>Trainee identifies the issue via a sensor trend rather than waiting for a fault code.</td></tr>
+            <tr><td>Correct upstream trace</td><td>20%</td><td>Trainee correctly links the Quality-station anomaly to the Battery-cell torque trend using the MES trace log.</td></tr>
+            <tr><td>RUL / CBM estimate</td><td>15%</td><td>Trainee proposes a defensible remaining-useful-life estimate or CBM trigger point from the trend data, not a guess.</td></tr>
+            <tr><td>5 Why chain quality</td><td>15%</td><td>Five coherent iterations reaching an actionable, not superficial, root cause.</td></tr>
+            <tr><td>Corrective action</td><td>10%</td><td>Action addresses the actual root cause, is specific, and is feasible on shift.</td></tr>
+            <tr><td>Predictive countermeasure</td><td>20%</td><td>Countermeasure prevents recurrence via condition-based monitoring (e.g., trend threshold, added sensor) rather than repeating the corrective action.</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <details class="module">
+        <summary><div class="mtitle"><span class="mnum">§6</span><h3>Adapting This Program</h3></div></summary>
+        <div class="mbody">
+          <ul class="clean">
+            <li><b>OEM-specific data:</b> This build stays deliberately brand-agnostic — Kia EV5/EV6 and BYD are named for training context, not as an OEM-endorsed product. If ADM Jizzakh's collaboration secures OEM-specific torque specs, weld schedules, or CAD references, swap them into the relevant scenario's symptom text without changing the diagnostic logic.</li>
+            <li><b>Non-EV lines:</b> Station 2 (Battery/HV) maps back to any high-value fastening/marriage station by substituting "HV battery pack" with the equivalent critical subassembly — the sensor-drift logic is unchanged.</li>
+            <li><b>Shorter delivery:</b> Modules 1–6 can run as a ~21.5-hour Foundation track without the capstone; add Module 7 separately as a 3-hour add-on for maintenance/technician trainees specifically.</li>
+            <li><b>Language localization:</b> All simulator scenario text lives in a single JavaScript data object near the top of the script (search for <code>SCENARIOS</code>) to simplify translation into Uzbek or Russian for local cohorts.</li>
+          </ul>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  IEG Digital Twin Training Series · ADM Jizzakh EV Robot Predictive Maintenance Module · Standalone HTML — no install required after fonts load once.
+</footer>
+
+<script>
+const STATIONS = [
+  {name:"BIW Robotic Welding Cell", short:"ST-01", tag:"WELD ROBOT R14 · KIA EV5/EV6 UNIBODY", workObject:'car'},
+  {name:"Battery Pack Robotic Assembly (HV)", short:"ST-02", tag:"TORQUE ROBOT T7 · HV PACK — EV5/EV6 & BYD", workObject:'battery'},
+  {name:"Paint / E-Coat Robotic Cell", short:"ST-03", tag:"SPRAY ROBOT B6 · E-COAT LINE", workObject:'car'},
+  {name:"Final Marriage & Motor-Battery Mount Cell", short:"ST-04", tag:"MARRIAGE CELL M3 · MOTOR-BATTERY MOUNT", workObject:'car'},
+  {name:"EOL Quality — Vision & HV Functional Test", short:"ST-05", tag:"EOL TEST ROBOT Q2 · VISION + HV TEST", workObject:'car'}
+];
+
+const SCENARIOS = [
+  [
+    {label:"Servo Weld-Gun Ball-Screw Wear",
+     symptom:"Weld-gun closing time has crept from 0.38s to 0.51s over three shifts, and the gun now needs a higher force setpoint to reach the same clamp pressure. No fault code has fired.",
+     options:[
+       "The ball-screw drive in the servo gun is wearing, so more travel and force are needed to reach the same clamp pressure",
+       "The steel coil supplier changed gauge thickness on the EV5/EV6 unibody panels",
+       "An operator manually changed the weld schedule"
+     ], correct:0,
+     explain:"Correct — ball-screw wear increases mechanical backlash and friction, so the gun takes longer to close and needs a higher force command to hit the same clamp pressure. This is a textbook predictive-maintenance signature: a slow, monotonic trend with no hard fault.",
+     action:"Inspect ball-screw play and lubrication; if the trend continues past the CBM limit, schedule replacement at the next planned stop rather than running to failure.",
+     predict:"Track closing-time and force-setpoint trend against a condition-based limit, not a fixed calendar interval. At the current drift rate, remaining useful life is roughly 2-3 weeks before the gun risks under-clamping a weld."},
+    {label:"Wrist (J6) Bearing Vibration Trend",
+     symptom:"Vibration RMS on the robot's wrist axis has risen from a 2.1 mm/s baseline to 4.6 mm/s over 10 days. Weld placement is still within tolerance and no alarm has triggered.",
+     options:[
+       "Wrist bearing wear is raising vibration amplitude before it affects weld placement",
+       "The robot's teach program was edited overnight",
+       "Line takt time was shortened last week"
+     ], correct:0,
+     explain:"Correct — bearing degradation shows up in the vibration spectrum well before it affects positioning accuracy. Waiting for a placement defect means waiting past the point where a scheduled bearing swap would have been cheap.",
+     action:"Log a work order for wrist bearing inspection at the next changeover; do not wait for a hard positional fault.",
+     predict:"ISO-style vibration severity bands (good / satisfactory / alert / danger) give a repeatable trigger point. At this trend rate the axis is projected to cross the 'alert' band within roughly 7-10 operating days."},
+    {label:"Dress-Pack Cable Flex Fatigue",
+     symptom:"The robot's dress-pack (cable/hose bundle) is showing a rising rate of intermittent CRC/communication errors that self-clear within a cycle, occurring more often as accumulated motion cycles increase.",
+     options:[
+       "Repeated flexing is fatiguing conductors inside the dress-pack, and error rate is rising with cycle count",
+       "The PLC network switch needs a firmware update",
+       "A different Wi-Fi access point was installed nearby"
+     ], correct:0,
+     explain:"Correct — dress-pack cables have a rated flex-cycle life. As strands fatigue, intermittent, self-clearing communication faults appear well before an outright cable failure, a classic cycle-count-driven wear-out signature.",
+     action:"Log the CRC error rate against motion-cycle count; replace the dress-pack at the next planned stop if the trend is accelerating.",
+     predict:"Track cumulative flex cycles against the cable's rated flex life rather than waiting for a full communication loss; build supplier lead time into the PM calendar in advance."}
+  ],
+  [
+    {label:"Torque Robot End-Effector Bit Wear",
+     symptom:"HV battery-mount bolts are all reporting a 'pass' from the torque robot, but the achieved-torque values are trending down toward the lower control limit, with no tool fault.",
+     options:[
+       "The driver bit is wearing, so the tool needs to run longer/harder to still register a nominal 'pass'",
+       "The battery pack supplier changed bolt coating",
+       "Ambient temperature in the cell increased"
+     ], correct:0,
+     explain:"Correct — a worn driver bit slips slightly under load, so the tool reports 'pass' inside the setpoint window while true delivered torque quietly drifts down. On an HV mounting joint, pass/fail alone is not enough evidence of joint integrity.",
+     action:"Replace the driver bit; audit recent HV-mount joints in the affected window with a calibrated hand tool.",
+     predict:"Trend the achieved-torque distribution (not just pass/fail count) per bit-cycle count. This is safety-critical enough to warrant a tighter CBM limit than a cosmetic fastener."},
+    {label:"Pack-Lift Positioning Robot — Harmonic Drive Backlash Growth",
+     symptom:"Battery-pack placement repeatability, measured by the vision system, has widened from ±0.2mm to ±0.9mm over two weeks on the lift/positioning robot. Placement is still inside the outer tolerance band.",
+     options:[
+       "Harmonic drive backlash is growing, degrading positioning repeatability before it breaches tolerance",
+       "The battery pack weight changed between EV5 and EV6 variants",
+       "The AGV delivering packs to the cell was recalibrated"
+     ], correct:0,
+     explain:"Correct — harmonic drive wear shows up first as a growing repeatability spread, well before a single placement actually fails tolerance. This is exactly the drift a fixed pass/fail check will miss.",
+     action:"Schedule harmonic drive inspection/service; in the meantime, tighten the in-process repeatability alert band so trainees don't wait for an outright miss.",
+     predict:"Track repeatability spread (not just pass/fail) per motion-cycle count against the drive's rated backlash-growth curve to estimate remaining service life."},
+    {label:"HV Connector Mating-Force Sensor Drift",
+     symptom:"The robot's mating-force feedback for the HV connector has been reading progressively lower for a fully-seated connection, even though physical inspection still confirms full seating, for now.",
+     options:[
+       "The force sensor's baseline is drifting, which risks eventually masking a genuinely under-seated HV connection",
+       "The connector design was updated by the OEM",
+       "Line speed was increased to meet a shipment deadline"
+     ], correct:0,
+     explain:"Correct — a drifting force-sensor baseline is dangerous specifically because it degrades the one signal meant to catch a bad HV mating. This is a case where the sensor itself, not the process, needs predictive attention.",
+     action:"Recalibrate the force sensor against a certified reference immediately; do not wait for a missed HV connection to catch this.",
+     predict:"HV-critical sensors should sit on a shorter calibration-verification interval than general process sensors, treat sensor health as its own predictive-maintenance item, not just the robot's mechanics."}
+  ],
+  [
+    {label:"Bell-Cup Bearing Wear",
+     symptom:"Atomization quality has slowly degraded, clearcoat film-thickness variance is trending up over several hundred units, with no single step change and no equipment fault.",
+     options:[
+       "Bell-cup bearing wear is reducing rotational-speed consistency, degrading atomization",
+       "A new paint batch was mixed slightly differently",
+       "The car body panels are a different gauge of steel"
+     ], correct:0,
+     explain:"Correct — as the bell-cup bearing wears, rotational speed becomes less consistent, degrading atomization and finish texture gradually rather than suddenly.",
+     action:"Inspect/replace the bell-cup bearing per wear schedule; verify rotational speed against spec.",
+     predict:"Bearing wear tracked by run-hours with rotational-speed variance trended, not just a scheduled blind swap."},
+    {label:"Robot Wrist Seal Degradation",
+     symptom:"The paint robot's wrist joint is showing a slowly rising friction/current signature during the spray stroke, correlating with a very slight paint residue at the seal line.",
+     options:[
+       "The wrist seal is degrading and allowing paint ingress, raising joint friction over time",
+       "The booth exhaust fan speed was changed",
+       "A new spray-gun nozzle was installed"
+     ], correct:0,
+     explain:"Correct — seal ingress raises wrist-axis friction and current draw well before it becomes a hard jam, a slow, trackable wear-out pattern.",
+     action:"Schedule seal replacement; inspect for internal paint ingress.",
+     predict:"Trend wrist-axis current/friction signature per operating hour against the seal's rated life."},
+    {label:"Base-Axis (J1) Reducer Wear",
+     symptom:"On the widest sweep motion (base axis), path deviation measured by the vision system has been trending upward, subtle and sub-millimeter, but consistent over the last two weeks.",
+     options:[
+       "Base-axis reducer wear is introducing a small, growing path deviation on the largest sweep motion",
+       "The car body was repositioned on the line",
+       "Paint viscosity was adjusted for a new color"
+     ], correct:0,
+     explain:"Correct — reducer wear on the highest-load axis shows up first as a growing sweep-path deviation, before it affects finish quality directly.",
+     action:"Inspect/service the base reducer; verify path with a laser tracker.",
+     predict:"Trend path deviation per operating hour against the reducer's wear curve."}
+  ],
+  [
+    {label:"Lift Servo Drive Encoder Degradation",
+     symptom:"The marriage lift's position feedback noise floor has been rising, and on a small but growing number of cycles the lift stops 1-2mm short of commanded height before correcting on a second attempt.",
+     options:[
+       "The lift's servo drive encoder is degrading, raising feedback noise and occasionally under-shooting position",
+       "The battery pack weight tolerance changed",
+       "A software update changed the lift's motion profile"
+     ], correct:0,
+     explain:"Correct — an encoder's noise-floor rise precedes a hard positioning fault. Waiting for the lift to miss outright means waiting past the cheap-fix window.",
+     action:"Replace/inspect the encoder; verify lift repeatability.",
+     predict:"Trend encoder noise floor and correction-retry rate against a CBM alert threshold."},
+    {label:"Fastening Robot Spindle Bearing Wear",
+     symptom:"The fastening robot's spindle motor current is trending up at the same torque setpoint across thousands of cycles, the tool still reports 'pass' every time.",
+     options:[
+       "Spindle bearing wear is raising friction, so more current is needed to reach the same torque",
+       "The fastener supplier changed thread coating",
+       "The robot cell was recently rebalanced for a new takt time"
+     ], correct:0,
+     explain:"Correct — rising current at a fixed torque setpoint is a classic wear signature masked by a pass/fail spec that never actually fails.",
+     action:"Replace the spindle bearing at the next planned stop.",
+     predict:"Trend current-at-setpoint per cycle count against the bearing's wear curve to estimate remaining useful life."},
+    {label:"Vision-Guided Alignment Camera Thermal Drift",
+     symptom:"Motor-to-body alignment offset measured by the guidance camera correlates with cell enclosure temperature, worse late in the shift as ambient heat builds, better after the morning startup.",
+     options:[
+       "The alignment camera's calibration is thermally drifting as the enclosure heats up",
+       "The motor supplier changed the mounting bracket design",
+       "A different operator runs the afternoon shift"
+     ], correct:0,
+     explain:"Correct — thermal drift in vision calibration is a predictable, trackable pattern once correlated with temperature, exactly the kind of signal a CBM program should catch.",
+     action:"Add thermal compensation or scheduled recalibration keyed to enclosure temperature, not just calendar time.",
+     predict:"Log alignment offset against enclosure temperature to build a compensation curve, cutting late-shift drift before it produces a marriage misalignment."}
+  ],
+  [
+    {label:"Robot-Mounted Vision Camera Calibration Drift",
+     symptom:"False-reject rate at the final vision check has doubled overnight; the physical parts being rejected look correct on manual review.",
+     options:[
+       "Camera calibration drifted, changing the false-reject/false-accept threshold",
+       "A new inspection SOP was issued overnight",
+       "The lighting supplier changed the LED ring"
+     ], correct:0,
+     explain:"Correct — lighting or lens calibration drift shifts the accept/reject threshold, inflating false rejects without any real change in part quality.",
+     action:"Recalibrate the camera against a reference target; re-inspect held units.",
+     predict:"Schedule calibration checks and monitor ambient lighting trend, not just react to a reject-rate spike."},
+    {label:"Six-Axis Force/Torque Sensor Zero-Offset Drift (HV Functional Test)",
+     symptom:"The EOL functional-test robot's force/torque sensor zero-offset has been creeping, occasionally reading a small residual force on units it should read as zero, inflating the retest queue.",
+     options:[
+       "Sensor zero-offset drift is inflating false-fail retests",
+       "The test fixture was swapped for a new EV6 variant",
+       "The retest queue is backed up due to staffing"
+     ], correct:0,
+     explain:"Correct — F/T sensor zero-offset drift is a known calibration-life issue; catch it by trending the zero-offset itself, not just the retest count.",
+     action:"Rezero/recalibrate the sensor; clear the false-fail queue.",
+     predict:"Trend the zero-offset against the sensor's calibration-life spec."},
+    {label:"Robot Arm Repeatability Degradation from Accumulated Micro-Collisions",
+     symptom:"Across the EOL robot's full production history, repeatability has slowly widened. No single event caused it, small, unlogged contacts during changeovers add up.",
+     options:[
+       "Accumulated micro-collisions have gradually degraded repeatability",
+       "The part fixture was redesigned",
+       "A firmware update changed the motion controller"
+     ], correct:0,
+     explain:"Correct — cumulative minor events, individually invisible, add up to a real drift. Predictive maintenance at this station means tracking the long-run trend, not just per-shift performance.",
+     action:"Full recalibration/TCP re-teach; review changeover procedures to reduce contact risk.",
+     predict:"Track long-horizon (weeks/months) repeatability trend as its own KPI, separate from shift-level metrics."}
+  ]
+];
+
+let currentStation = 0;
+let simState = { t:0, faulted:-1, cascade:false };
+let clockTimer = null;
+let healthVal = 12;
+let healthHistory = Array.from({length:24}, ()=> 10 + Math.random()*6);
+
+/* ======================================================================
+   AUDIO ENGINE — fully synthesized with Web Audio API (no sound files,
+   so the file stays self-contained and license-free). Ambient factory
+   texture per cell + alarm on fault + diagnosis feedback chimes.
+====================================================================== */
+const AudioFX = {
+  ctx:null, master:null, humGain:null, noiseGain:null, noiseFilter:null,
+  started:false, muted:false,
+  stationTimer:null, alarmTimer:null,
+
+  init(){
+    if(this.started) return;
+    this.started = true;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    this.ctx = new Ctx();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = this.muted ? 0 : 0.55;
+    this.master.connect(this.ctx.destination);
+
+    this.humGain = this.ctx.createGain();
+    this.humGain.gain.value = 0.05;
+    this.humGain.connect(this.master);
+    [55,110].forEach((f,i)=>{
+      const o = this.ctx.createOscillator();
+      o.type = 'triangle'; o.frequency.value = f + (i?3:0);
+      o.connect(this.humGain); o.start();
+    });
+
+    const bufSize = this.ctx.sampleRate * 2;
+    const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++) data[i] = Math.random()*2-1;
+    const noiseSrc = this.ctx.createBufferSource();
+    noiseSrc.buffer = buf; noiseSrc.loop = true;
+    this.noiseFilter = this.ctx.createBiquadFilter();
+    this.noiseFilter.type = 'bandpass'; this.noiseFilter.frequency.value = 1200; this.noiseFilter.Q.value = 0.7;
+    this.noiseGain = this.ctx.createGain();
+    this.noiseGain.gain.value = 0.0;
+    noiseSrc.connect(this.noiseFilter); this.noiseFilter.connect(this.noiseGain); this.noiseGain.connect(this.master);
+    noiseSrc.start();
+
+    this.setStation(currentStation);
+  },
+
+  ping(freq, dur, type, gainVal, delay){
+    if(!this.ctx) return;
+    const t0 = this.ctx.currentTime + (delay||0);
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type||'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gainVal||0.18, t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t0); o.stop(t0+dur+0.02);
+  },
+
+  burst(dur, gainVal, freq){
+    if(!this.ctx) return;
+    const t0 = this.ctx.currentTime;
+    const len = Math.floor(this.ctx.sampleRate*dur);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<len;i++) data[i] = (Math.random()*2-1) * (1-i/len);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const filt = this.ctx.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value = freq||2800; filt.Q.value=1.1;
+    const g = this.ctx.createGain(); g.gain.value = gainVal||0.12;
+    src.connect(filt); filt.connect(g); g.connect(this.master);
+    src.start(t0);
+  },
+
+  setStation(i){
+    if(!this.ctx) return;
+    if(this.stationTimer) clearInterval(this.stationTimer);
+    this.noiseGain.gain.linearRampToValueAtTime(0.0, this.ctx.currentTime+0.3);
+
+    if(i===0){ // Weld — crackle bursts
+      this.stationTimer = setInterval(()=>{ this.burst(0.09, 0.10, 3200 + Math.random()*1200); }, 900 + Math.random()*500);
+    } else if(i===1){ // Battery/HV — torque clicks
+      this.stationTimer = setInterval(()=>{ this.ping(320, 0.09, 'square', 0.10); }, 1400 + Math.random()*600);
+    } else if(i===2){ // Paint — continuous hiss
+      this.noiseFilter.frequency.value = 3000;
+      this.noiseGain.gain.linearRampToValueAtTime(0.035, this.ctx.currentTime+0.5);
+      this.stationTimer = setInterval(()=>{ this.ping(2200, 0.15, 'sine', 0.03); }, 2200);
+    } else if(i===3){ // Marriage — rhythmic clank
+      this.stationTimer = setInterval(()=>{ this.ping(120, 0.12, 'sine', 0.16); }, 950);
+    } else { // Quality — soft scanner ping
+      this.stationTimer = setInterval(()=>{ this.ping(1800, 0.1, 'sine', 0.05); }, 1500);
+    }
+  },
+
+  setFault(active, cascade){
+    if(!this.ctx) return;
+    if(this.alarmTimer){ clearInterval(this.alarmTimer); this.alarmTimer=null; }
+    if(active && !cascade){
+      let hi = false;
+      this.alarmTimer = setInterval(()=>{
+        this.ping(hi?880:1046, 0.3, 'square', 0.09);
+        hi = !hi;
+      }, 350);
+    } else if(active && cascade){
+      this.alarmTimer = setInterval(()=>{ this.ping(1500, 0.08, 'sine', 0.025); }, 4000);
+    }
+  },
+
+  result(correct){
+    if(!this.ctx) return;
+    if(correct){ this.ping(523,0.18,'sine',0.16); this.ping(784,0.22,'sine',0.16,0.14); }
+    else { this.ping(260,0.28,'square',0.12); this.ping(196,0.32,'square',0.12,0.12); }
+  },
+
+  click(){ this.ping(700,0.05,'sine',0.06); },
+
+  setMuted(m){
+    this.muted = m;
+    if(this.master) this.master.gain.linearRampToValueAtTime(m?0:0.55, (this.ctx.currentTime||0)+0.15);
+  }
+};
+
+function ensureAudioStarted(){
+  if(!AudioFX.started) AudioFX.init();
+}
+document.addEventListener('click', ensureAudioStarted, {once:true});
+
+document.getElementById('sound-toggle').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  ensureAudioStarted();
+  AudioFX.setMuted(!AudioFX.muted);
+  document.getElementById('sound-label').textContent = AudioFX.muted ? 'OFF' : 'ON';
+  document.getElementById('sound-toggle').classList.toggle('muted', AudioFX.muted);
+});
+
+/* ===== Schematic robot-cell diagram (SVG, generated — no image assets) ===== */
+function cellSVG(st){
+  const car = `
+    <rect x="150" y="88" width="140" height="82" rx="16" class="wobj-outline"/>
+    <rect x="168" y="68" width="104" height="34" rx="10" class="wobj-outline"/>
+    <line x1="160" y1="170" x2="160" y2="184" class="wobj-outline"/>
+    <line x1="280" y1="170" x2="280" y2="184" class="wobj-outline"/>`;
+  const battery = `
+    <rect x="138" y="94" width="164" height="72" rx="8" class="wobj-outline"/>
+    ${Array.from({length:8}).map((_,i)=>`<line x1="${150+i*19}" y1="100" x2="${150+i*19}" y2="160" class="wobj-cell"/>`).join('')}
+    <rect x="138" y="78" width="66" height="16" rx="4" class="hv-ribbon"/>
+    <text x="171" y="90" class="hv-text" text-anchor="middle">HV</text>`;
+  const obj = st.workObject==='battery' ? battery : car;
+  return `<svg viewBox="0 0 400 300" class="cellsvg" xmlns="http://www.w3.org/2000/svg">
+    <line x1="20" y1="228" x2="380" y2="228" class="conveyor"/>
+    ${[0,1,2].map(i=>`<rect x="${40+i*120}" y="220" width="30" height="16" rx="3" class="pallet" style="animation-delay:${(i*1.3).toFixed(1)}s"/>`).join('')}
+    ${obj}
+    <g class="robotarm">
+      <rect x="188" y="235" width="24" height="14" rx="3" class="rbase"/>
+      <line x1="200" y1="235" x2="200" y2="205" class="rlink" stroke-width="10"/>
+      <line x1="200" y1="205" x2="235" y2="165" class="rlink" stroke-width="8"/>
+      <line x1="235" y1="165" x2="215" y2="130" class="rlink" stroke-width="6"/>
+      <circle cx="200" cy="205" r="6" class="rjoint"/>
+      <circle cx="235" cy="165" r="5" class="rjoint"/>
+      <circle cx="215" cy="130" r="4" class="rjoint"/>
+    </g>
+    <circle cx="235" cy="165" r="5" class="sensor-dot" data-sensor="a"/>
+    <circle cx="200" cy="205" r="5" class="sensor-dot" data-sensor="b"/>
+    <text x="200" y="270" text-anchor="middle" class="cell-label">${st.tag}</text>
+  </svg>`;
+}
+
+function renderCell(i){
+  document.getElementById('cell-diagram').innerHTML = cellSVG(STATIONS[i]);
+}
+
+function renderLegend(){
+  const el = document.getElementById('legend');
+  el.innerHTML = STATIONS.map(s=>`<div><span class="sw" style="background:#3DDBD9"></span>${s.short} — ${s.name}</div>`).join('')
+   + `<div><span class="sw" style="background:#4CC38A"></span>Sensor dot: nominal</div>`
+   + `<div><span class="sw" style="background:#E8492B"></span>Sensor dot / bracket: fault or drift active</div>`;
+}
+
+function renderScenarioSelect(){
+  const sel = document.getElementById('scenario-select');
+  sel.innerHTML = SCENARIOS[currentStation].map((s,i)=>`<option value="${i}">${s.label}</option>`).join('');
+}
+
+function positionBracket(faulted){
+  const st = STATIONS[currentStation];
+  const b = document.getElementById('bracket');
+  const tag = document.getElementById('bracket-tag');
+  b.classList.toggle('fault', faulted);
+  tag.textContent = st.tag + ' · ' + (faulted ? 'DRIFT' : 'OK');
+}
+
+function selectStation(i){
+  currentStation = i;
+  document.querySelectorAll('.stationpicker button').forEach(b=> b.classList.toggle('active', +b.dataset.s===i));
+  renderCell(i);
+  simState.faulted = -1; simState.cascade = false;
+  positionBracket(false);
+  resetHealth();
+  updateKPIs();
+  renderScenarioSelect();
+  document.getElementById('diag-area').innerHTML='';
+}
+
+function renderDiagnostic(){
+  const idx = +document.getElementById('scenario-select').value;
+  const sc = SCENARIOS[currentStation][idx];
+  const area = document.getElementById('diag-area');
+  area.innerHTML = `
+    <div class="diagbox">
+      <span class="tag2">${STATIONS[currentStation].short} · SENSOR LOG</span>
+      <div style="margin-bottom:8px;">${sc.symptom}</div>
+      <div class="subhead" style="margin:10px 0 0;">Diagnose the root cause</div>
+      <div class="options" id="opt-wrap">
+        ${sc.options.map((o,i)=>`<label><input type="radio" name="opt" value="${i}"> ${o}</label>`).join('')}
+      </div>
+      <button class="btn primary" style="margin-top:10px;" id="submit-diag">Submit Diagnosis</button>
+      <div class="result" id="diag-result"></div>
+    </div>
+  `;
+  document.getElementById('submit-diag').addEventListener('click', ()=>{
+    const picked = document.querySelector('input[name="opt"]:checked');
+    if(!picked){ return; }
+    const val = +picked.value;
+    const res = document.getElementById('diag-result');
+    res.classList.add('show');
+    const isCorrect = val===sc.correct;
+    AudioFX.result(isCorrect);
+    const verdict = isCorrect ? '<b>Correct.</b>' : '<b>Not quite.</b>';
+    res.classList.toggle('correct', isCorrect);
+    res.classList.toggle('wrong', !isCorrect);
+    res.innerHTML = `${verdict} ${sc.explain}<br><br><b>Corrective action:</b> ${sc.action}<br><b>Predictive / CBM interval:</b> ${sc.predict}`;
+  });
+}
+
+function updateKPIs(){
+  let cycle=38, oee=93, uph=92;
+  const shade = document.getElementById('stage-shade');
+  if(simState.faulted>=0 && !simState.cascade){
+    cycle=52; oee=79; uph=71;
+    shade.classList.add('alert-wash');
+  } else if(simState.cascade){
+    cycle=41; oee=88; uph=84;
+    shade.classList.remove('alert-wash');
+  } else {
+    shade.classList.remove('alert-wash');
+  }
+  document.getElementById('kpi-cycle').textContent = cycle+'s';
+  document.getElementById('kpi-uph').textContent = uph;
+  document.getElementById('kpi-oee').textContent = oee+'%';
+  document.getElementById('hud-state').innerHTML = `STATE: <b>${simState.faulted>=0? (simState.cascade? 'DRIFT (UNWATCHED)':'DRIFT ACTIVE') : 'RUNNING'}</b>`;
+  document.querySelectorAll('.sdot').forEach((d,i)=>{
+    d.classList.toggle('warn', simState.faulted===i && !simState.cascade);
+  });
+}
+
+function resetHealth(){
+  healthVal = 8 + Math.random()*6;
+  healthHistory = Array.from({length:24}, ()=> healthVal + (Math.random()*2-1));
+  renderTrend();
+}
+
+function stepHealth(){
+  if(simState.faulted>=0 && !simState.cascade){
+    healthVal = Math.min(100, healthVal + 2.2 + Math.random()*1.2);
+  } else if(simState.cascade){
+    healthVal = Math.min(100, healthVal + 0.6);
+  } else {
+    healthVal = Math.max(6, healthVal - 1.4 + (Math.random()*1.6-0.8));
+  }
+  healthHistory.push(healthVal);
+  if(healthHistory.length>24) healthHistory.shift();
+  renderTrend();
+}
+
+function renderTrend(){
+  const poly = document.getElementById('trend-poly');
+  const pts = healthHistory.map((v,i)=>{
+    const x = (i/23)*200;
+    const y = 56 - (Math.max(0,Math.min(100,v))/100)*52;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  poly.setAttribute('points', pts);
+  poly.classList.toggle('critical', healthVal>=70);
+
+  document.getElementById('kpi-health').textContent = healthVal.toFixed(0);
+
+  let status, rul;
+  if(healthVal>=85){ status='ACTION REQUIRED'; rul='0 shifts — act now'; }
+  else if(healthVal>=55){ status='WATCH — TREND RISING'; rul=Math.max(1,Math.round((85-healthVal)/2.2))+' shifts to threshold (est.)'; }
+  else { status='NOMINAL'; rul='—'; }
+  document.getElementById('trend-readout').innerHTML = `Health Index: <b>${healthVal.toFixed(0)}</b> · Status: <b>${status}</b><br>Predicted RUL: ${rul}`;
+
+  document.querySelectorAll('.sensor-dot').forEach(d=> d.classList.toggle('warn', healthVal>=55));
+}
+
+function tickClock(){
+  simState.t += 1;
+  const mm = Math.floor(simState.t/60).toString().padStart(2,'0');
+  const ss = Math.floor(simState.t%60).toString().padStart(2,'0');
+  document.getElementById('hud-clock').innerHTML = `T+${mm}:${ss}`;
+  stepHealth();
+}
+
+document.getElementById('stationpicker').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  ensureAudioStarted();
+  AudioFX.click();
+  selectStation(+btn.dataset.s);
+  AudioFX.setStation(+btn.dataset.s);
+});
+
+document.getElementById('inject-btn').addEventListener('click', ()=>{
+  ensureAudioStarted();
+  AudioFX.click();
+  simState.faulted = currentStation;
+  simState.cascade = false;
+  positionBracket(true);
+  updateKPIs();
+  renderDiagnostic();
+  AudioFX.setFault(true, false);
+});
+
+document.getElementById('reset-btn').addEventListener('click', ()=>{
+  ensureAudioStarted();
+  AudioFX.click();
+  simState.faulted = -1;
+  simState.cascade = false;
+  positionBracket(false);
+  resetHealth();
+  updateKPIs();
+  document.getElementById('diag-area').innerHTML='';
+  AudioFX.setFault(false, false);
+});
+
+document.getElementById('cascade-btn').addEventListener('click', ()=>{
+  ensureAudioStarted();
+  AudioFX.click();
+  selectStation(1);
+  AudioFX.setStation(1);
+  document.getElementById('scenario-select').value = 0;
+  simState.faulted = 1;
+  simState.cascade = true;
+  positionBracket(true);
+  updateKPIs();
+  AudioFX.setFault(true, true);
+  const area = document.getElementById('diag-area');
+  area.innerHTML = `
+    <div class="diagbox">
+      <span class="tag2" style="border-color:var(--alert);color:var(--alert);">PREDICTIVE SIGNAL — NOBODY IS WATCHING IT</span>
+      <div style="margin-bottom:8px;">The Battery (HV) cell's torque-robot bit wear has drifted quietly for two shifts. Achieved torque is trending down, but every joint still reports "pass," so no alarm fires. Three units later, the Quality cell's HV functional test logs an intermittent anomaly on those same units.</div>
+      <div class="subhead">Capstone task</div>
+      <p class="body-p" style="margin:0 0 8px;">Using the Curriculum → Module 7 worksheet, trace the Quality-station anomaly back to this Battery-cell torque trend via the MES build record, then build a 5 Why chain and a CBM countermeasure. See Instructor Guide §4 for the full answer key.</p>
+    </div>
+  `;
+});
+
+document.getElementById('scenario-select').addEventListener('change', renderDiagnostic);
+
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    ensureAudioStarted();
+    AudioFX.click();
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+renderCell(0);
+renderLegend();
+renderScenarioSelect();
+renderDiagnostic();
+positionBracket(false);
+renderTrend();
+clockTimer = setInterval(tickClock, 1000);
+</script>
+</body>
+</html>
