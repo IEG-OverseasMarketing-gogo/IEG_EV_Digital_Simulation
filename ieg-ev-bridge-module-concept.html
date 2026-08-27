@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IEG EV Bridge Module — Concept Demo</title>
+<style>
+  :root{
+    --bg:#46484b;
+    --bg-2:#3a3c3f;
+    --panel:#505356;
+    --panel-2:#5a5d60;
+    --lcd:#232527;
+    --line:rgba(210,210,210,.16);
+    --line-2:rgba(255,255,255,.10);
+    --ink:#f2f3f3;
+    --muted:#b7bbbd;
+    --blue:#1e6f9f;
+    --orange:#c8731f;
+    --red:#a13c3c;
+    --scope:#5ee6b5;
+    --amber:#ffb454;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --sans: Inter, "Segoe UI", Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+  body{
+    background-image:
+      radial-gradient(circle at 12% 0%, rgba(30,111,159,.08), transparent 45%),
+      radial-gradient(circle at 90% 8%, rgba(200,115,31,.06), transparent 40%),
+      linear-gradient(180deg, var(--bg), var(--bg-2));
+  }
+  .wrap{max-width:1360px;margin:0 auto;padding:20px 20px 60px;}
+
+  .hud{
+    display:grid;
+    grid-template-columns: 1.2fr repeat(4, minmax(0,1fr));
+    gap:10px;
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    padding:14px 16px;
+    align-items:center;
+  }
+  .hud-brand{display:flex;flex-direction:column;gap:2px;}
+  .hud-eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--scope);font-weight:700;}
+  .hud-title{font-size:18px;font-weight:800;line-height:1.2;}
+  .hud-stat{background:var(--lcd);border:1px solid rgba(94,230,181,.22);border-radius:12px;padding:8px 10px;font-family:var(--mono);}
+  .hud-stat .k{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7fdcb8;opacity:.8;}
+  .hud-stat .v{font-size:20px;font-weight:700;color:var(--scope);margin-top:2px;}
+  .hud-stat.budget .v{color:var(--amber);}
+  .hud-stat.budget.over .v{color:var(--red);}
+
+  /* Mode tabs — Blue / Orange / Red */
+  .modes{display:flex;gap:8px;margin:14px 0;}
+  .mode-tab{
+    flex:1;border:1.5px solid var(--line-2);background:var(--panel);border-radius:14px;
+    padding:12px 14px;cursor:pointer;transition:transform .15s ease;
+  }
+  .mode-tab:hover{transform:translateY(-1px);}
+  .mode-tab.locked{opacity:.45;cursor:not-allowed;}
+  .mode-tab.active.blue{border-color:var(--blue);background:linear-gradient(180deg, rgba(30,111,159,.16), rgba(30,111,159,.03));}
+  .mode-tab.active.orange{border-color:var(--orange);background:linear-gradient(180deg, rgba(200,115,31,.16), rgba(200,115,31,.03));}
+  .mode-tab.active.red{border-color:var(--red);background:linear-gradient(180deg, rgba(161,60,60,.16), rgba(161,60,60,.03));}
+  .mode-tab .mt-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+  .mode-tab .mt-title{font-size:14px;font-weight:800;margin-top:4px;}
+  .mode-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2);}
+  .mode-badge.pass{color:var(--scope);border-color:rgba(94,230,181,.4);}
+  .mode-badge.fail{color:var(--red);border-color:rgba(255,95,109,.4);}
+  .mode-badge.partial{color:var(--amber);border-color:rgba(255,180,84,.4);}
+
+  /* Principles strip — IEG's own, standalone */
+  .principle-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 18px;}
+  .principle-card{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);}
+  .principle-card .pk{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);font-weight:800;margin-bottom:6px;}
+  .principle-card p{margin:0;font-size:12px;color:var(--muted);line-height:1.5;}
+
+  .stage{display:grid;grid-template-columns:1.35fr .95fr;gap:14px;align-items:start;}
+  .panel{border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel);padding:16px;}
+  .panel-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--scope);font-weight:800;margin-bottom:10px;}
+  .briefing{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
+
+  /* Evidence panel — visible cards, no tool-gating */
+  .evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .evidence-card{
+    border:1px solid var(--line-2);background:var(--panel-2);border-radius:14px;padding:12px;cursor:pointer;
+  }
+  .evidence-card.done{opacity:.55;cursor:default;border-color:rgba(94,230,181,.4);}
+  .evidence-card .ec-tag{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .evidence-card .ec-name{font-size:13px;font-weight:800;margin-top:4px;}
+  .evidence-card .ec-reading{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--scope);line-height:1.6;white-space:pre-wrap;}
+
+  /* Decision path fork */
+  .path-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .path-card{border:2px solid var(--line-2);border-radius:14px;padding:14px;cursor:pointer;text-align:center;}
+  .path-card.investigate{border-color:var(--blue);}
+  .path-card.shortcut{border-color:var(--orange);}
+  .path-card:disabled, .path-card.disabled{opacity:.4;cursor:not-allowed;}
+  .path-card .pc-name{font-size:13px;font-weight:800;}
+  .path-card.investigate .pc-name{color:#7fc3e8;}
+  .path-card.shortcut .pc-name{color:#f0b273;}
+  .path-card .pc-cost{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px;}
+
+  .zone{margin-top:14px;}
+  .decision-q{font-size:14px;font-weight:700;margin-bottom:10px;line-height:1.5;}
+  .opt-list{display:grid;gap:8px;}
+  .opt-btn{text-align:left;border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink);border-radius:12px;padding:11px 13px;font-size:13px;cursor:pointer;}
+  .opt-btn.correct{border-color:var(--scope);background:rgba(94,230,181,.12);}
+  .opt-btn.wrong{border-color:var(--red);background:rgba(255,95,109,.12);}
+  .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:999px;margin-bottom:8px;}
+  .tag.complication{color:#7fc3e8;border:1px solid rgba(30,111,159,.5);background:rgba(30,111,159,.14);}
+  .tag.remediation{color:var(--amber);border:1px solid rgba(255,180,84,.4);background:rgba(255,180,84,.1);}
+
+  .result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0;}
+  .result-chip{border:1px solid var(--line-2);border-radius:12px;padding:10px;text-align:center;background:var(--panel-2);}
+  .result-chip .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+  .result-chip .v{font-size:17px;font-weight:900;margin-top:3px;}
+
+  .cta{border:none;border-radius:12px;padding:11px 16px;font-size:13px;font-weight:800;cursor:pointer;}
+  .cta.primary{background:linear-gradient(90deg, var(--blue), #4fb0e8);color:#071216;}
+  .cta.ghost{background:transparent;border:1px solid var(--line-2);color:var(--ink);}
+  .cta:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* AZIZ mentor bar */
+  .aziz-bar{
+    margin-top:14px;border:1px solid var(--line-2);border-radius:16px;padding:12px 14px;
+    display:flex;gap:12px;align-items:center;background:linear-gradient(90deg, rgba(30,111,159,.14), rgba(30,111,159,.02));
+  }
+  .aziz-avatar{
+    width:38px;height:38px;border-radius:50%;background:var(--panel-2);border:1.5px solid var(--blue);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#7fc3e8;flex:none;
+  }
+  .aziz-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+  .aziz-msg{font-size:13px;margin-top:2px;}
+
+  /* Instructor / Mentor notes toggle */
+  .instr-toggle-row{display:flex;justify-content:flex-end;margin:10px 0 0;}
+  .instr-toggle{border:1px solid rgba(30,111,159,.4);background:rgba(30,111,159,.1);color:#7fc3e8;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;}
+  .instr-panel{margin-top:14px;}
+  .instr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .instr-block{border:1px solid var(--line-2);border-radius:12px;padding:12px;background:var(--panel-2);}
+  .instr-block h4{margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);}
+  .instr-block ul, .instr-block ol{margin:0;padding-left:16px;font-size:12px;color:var(--muted);line-height:1.6;}
+  .checklist-item{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .checklist-item input{margin-top:2px;accent-color:var(--scope);}
+  .checklist-item.checked span{color:var(--ink);text-decoration:line-through;text-decoration-color:rgba(94,230,181,.5);}
+  .export-row{margin-top:10px;display:flex;gap:8px;}
+
+  /* Journal */
+  .journal{margin-top:16px;}
+  .journal-log{background:#081210;border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;max-height:180px;overflow-y:auto;}
+  .journal-log div{font-family:var(--mono);font-size:11px;color:#9fe6c8;line-height:1.8;}
+
+  .footnote{margin-top:22px;border-top:1px dashed var(--line-2);padding-top:14px;font-size:11.5px;color:var(--muted);line-height:1.7;}
+
+  @media (max-width:1080px){
+    .hud{grid-template-columns:1fr 1fr;}
+    .principle-strip{grid-template-columns:repeat(2,1fr);}
+    .stage{grid-template-columns:1fr;}
+    .instr-grid{grid-template-columns:1fr;}
+    .result-grid{grid-template-columns:repeat(2,1fr);}
+    .evidence-grid, .path-row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hud">
+    <div class="hud-brand" style="flex-direction:row;align-items:center;gap:10px;">
+      <img src="data:image/png;base64,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" alt="IEG logo" style="width:36px;height:auto;border-radius:6px;flex:none;" />
+      <div>
+        <div class="hud-eyebrow">IEG · EV Bridge Module</div>
+        <div class="hud-title">ICE → EV Diagnostic Bridge · Concept Demo</div>
+      </div>
+    </div>
+    <div class="hud-stat"><div class="k">Mode</div><div class="v" id="hud-mode">Blue</div></div>
+    <div class="hud-stat"><div class="k">XP</div><div class="v" id="hud-xp">0</div></div>
+    <div class="hud-stat"><div class="k">Combo</div><div class="v" id="hud-combo">×1.0</div></div>
+    <div class="hud-stat budget"><div class="k">Investigate Budget</div><div class="v" id="hud-budget">0 / 8min</div></div>
+  </div>
+
+  <div class="principle-strip">
+    <div class="principle-card"><div class="pk">ICE→EV Bridge-Specific</div><p>Not internal-combustion fault-finding — the core learning goal is HV safety judgment and system-identity recognition.</p></div>
+    <div class="principle-card"><div class="pk">AZIZ Mentor Always On</div><p>A coach character stays at the bottom of every screen and gives feedback instantly.</p></div>
+    <div class="principle-card"><div class="pk">Branching Outcomes</div><p>Not a simple right/wrong split — every decision leads into a real-world Complication or a Remediation retry.</p></div>
+    <div class="principle-card"><div class="pk">Investigate Budget vs Shortcut</div><p>Choose between careful investigation and an instant shortcut — the shortcut carries a ×2 penalty and no partial credit.</p></div>
+  </div>
+
+  <div class="modes" id="mode-list"></div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-title" id="lesson-title"></div>
+      <div class="briefing" id="briefing"></div>
+
+      <div class="panel-title" id="evidence-panel-title" style="margin-top:4px;">Evidence Panel</div>
+      <div class="evidence-grid" id="evidence-grid"></div>
+
+      <div class="zone" id="sequence-zone" hidden>
+        <div class="panel-title">Sequence the steps (click in the correct order into the 5 slots)</div>
+        <div id="sequence-slots" style="display:flex;gap:6px;margin-bottom:10px;"></div>
+        <div id="sequence-cards" class="evidence-grid" style="grid-template-columns:1fr 1fr;"></div>
+        <div style="margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--amber);" id="sequence-progress"></div>
+      </div>
+
+      <div class="path-row" id="path-row" hidden>
+        <button class="path-card investigate" id="path-investigate">
+          <div class="pc-name">Investigate</div>
+          <div class="pc-cost" id="path-investigate-cost"></div>
+        </button>
+        <button class="path-card shortcut" id="path-shortcut">
+          <div class="pc-name">Shortcut</div>
+          <div class="pc-cost" id="path-shortcut-cost"></div>
+        </button>
+      </div>
+
+      <div class="zone" id="decision-zone" hidden>
+        <div class="panel-title">Judgment</div>
+        <div class="decision-q" id="decision-q"></div>
+        <div class="opt-list" id="decision-opts"></div>
+      </div>
+
+      <div class="zone" id="followup-zone" hidden>
+        <span class="tag" id="followup-tag"></span>
+        <div class="decision-q" id="followup-q"></div>
+        <div class="opt-list" id="followup-opts"></div>
+      </div>
+
+      <div class="zone" id="result-zone" hidden>
+        <div class="panel-title">Mode Result</div>
+        <div class="briefing" id="result-copy"></div>
+        <div class="result-grid">
+          <div class="result-chip"><div class="l">XP Earned</div><div class="v" id="result-xp"></div></div>
+          <div class="result-chip"><div class="l">Penalty</div><div class="v" id="result-penalty"></div></div>
+          <div class="result-chip"><div class="l">Combo</div><div class="v" id="result-combo"></div></div>
+          <div class="result-chip"><div class="l">Result</div><div class="v" id="result-status"></div></div>
+        </div>
+        <button class="cta primary" id="next-mode-btn">Next Mode</button>
+      </div>
+
+      <div class="aziz-bar">
+        <div class="aziz-avatar">A</div>
+        <div>
+          <div class="aziz-meta" id="aziz-meta">AZIZ · Lv 1</div>
+          <div class="aziz-msg" id="aziz-msg">Gather your evidence when you're ready.</div>
+        </div>
+      </div>
+
+      <div class="zone journal">
+        <div class="panel-title">Journal</div>
+        <div class="journal-log" id="journal-log"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="instr-toggle-row"><button class="instr-toggle" id="instr-toggle">Show Instructor Layer</button></div>
+      <div class="instr-panel" id="instr-panel" hidden>
+        <div class="instr-grid">
+          <div class="instr-block"><h4>Objectives</h4><ul id="obj-list"></ul></div>
+          <div class="instr-block"><h4>Teaching Notes</h4><ul id="notes-list"></ul></div>
+          <div class="instr-block"><h4>Instructor Prompts</h4><ul id="prompt-list"></ul></div>
+          <div class="instr-block"><h4>Debrief</h4><ol id="debrief-list"></ol></div>
+        </div>
+        <div class="instr-block" style="margin-top:12px;">
+          <h4>Real Vehicle Practice Checklist</h4>
+          <div id="checklist-list"></div>
+        </div>
+        <div class="export-row">
+          <button class="cta ghost" id="export-btn">Export this mode's lesson plan (.md)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Concept demo designed around IEG's own EV Bridge Module wireframe (Blue/Orange/Red modes, the AZIZ mentor, the Investigate Budget vs Shortcut structure). Vehicle-specific content (e.g. Kia EV5/EV6, BYD) is intentionally out of scope here — it requires sourced OEM/field data and SME review before it can be added responsibly.
+  </div>
+</div>
+
+<script>
+  const MODES = [
+    {
+      id: 'b1', color: 'blue', name: 'B1', title: 'Applied Electrical Fundamentals',
+      briefing: 'An unfamiliar vehicle arrives with no work order. Gather evidence to determine whether it is ICE, HEV, or EV before deciding on a service procedure.',
+      budget: 8,
+      evidence: [
+        { id:'label', tag:'A', name:'Service label', points:10,
+          reading:'"CAUTION — HIGH VOLTAGE COMPONENTS PRESENT" · chassis rating marked HEV.' },
+        { id:'cable', tag:'B', name:'Cable routing', points:10,
+          reading:'Orange-sheathed cable confirmed from engine bay to rear battery pack — HV routing confirmed.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 35, investigateCost: 5,
+      shortcutLabel:'Skip checks and start standard ICE service', shortcutNote:'An unsafe shortcut taken without evidence. Revisit what was missed with the class.',
+      question:'Once an HV system is confirmed, what should you do first?',
+      options:[
+        { name:'Proceed with standard ICE service since hybrids only have a small battery', correct:false, riskDelta:15 },
+        { name:'Begin HV safety procedures before continuing service work', correct:true, points:20 },
+        { name:'Ignore the label and keep working until a warning appears', correct:false, riskDelta:20 }
+      ],
+      explanation:'The core of this stage is procedure: identify the energy system first, then let that identity drive the safe service pathway.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'The label is smudged and the VIN lookup hasn\'t responded yet. What do you do while you wait for confirmation?',
+          options:[
+            { name:'Proceed with ICE service since the label was inconclusive', correct:false, riskDelta:15 },
+            { name:'Treat the vehicle as HV until confirmation returns and apply full precautions', correct:true, points:15 },
+            { name:'Have a coworker guess based on the vehicle\'s shape', correct:false, riskDelta:10 }
+          ],
+          explanation:'When identity is uncertain, the safe default is to assume the higher-risk category until evidence rules it out.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'A technician sees an orange cable but hesitates. What is the minimum action required before touching anything?',
+          options:[
+            { name:'Confirm HV status via the label or wiring diagram before proceeding', correct:true, points:10 },
+            { name:'Assume orange might just be a decorative harness color', correct:false, riskDelta:15 }
+          ],
+          explanation:'Orange sheathing is an industry-standard HV warning cue. It must be confirmed, never assumed away.' }
+      },
+      objectives:['Distinguish ICE/HEV/EV at intake.', 'Explain why hybrids also trigger HV safety logic.'],
+      teachingNotes:['Teach this as the first gate of safe work, not a memorization question.', 'Have students say out loud what they must verify before touching the vehicle.'],
+      prompts:['What exactly tells you this isn\'t a normal ICE vehicle?', 'What is the risk of proceeding with routine service before identification?'],
+      debrief:['What evidence changed your first assumption?', 'What would you do first in a real shop?'],
+      checklist:['Photograph and log the VIN/service label before work begins.', 'Visually identify and mark orange HV cable routing in the engine bay.', 'Record the ICE/HEV/EV classification on the work order.']
+    },
+    {
+      id: 'b2', color: 'blue', name: 'B2', title: 'Headlight Circuit Diagnosis',
+      briefing: 'The headlights cut out intermittently. Diagnose the circuit before replacing any parts.',
+      budget: 6,
+      evidence: [
+        { id:'voltage', tag:'A', name:'Battery voltage measurement', points:10,
+          reading:'Battery voltage 12.6V — normal. The supply itself is not the problem.' },
+        { id:'resistance', tag:'B', name:'Circuit resistance measurement', points:10,
+          reading:'Circuit resistance 4.8Ω — above spec (should be under 0.5Ω). Open circuit or break suspected.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 20, investigateCost: 4,
+      shortcutLabel:'Replace the bulb right away', shortcutNote:'A habit of swapping parts without isolating the circuit first. Revisit what should have been measured first.',
+      question:'Supply voltage is normal and the path is suspected open — what\'s next?',
+      options:[
+        { name:'Run a voltage-drop test across connectors and ground points to pinpoint the break', correct:true, points:20 },
+        { name:'Conclude the battery is weak and close the job', correct:false, riskDelta:10 },
+        { name:'Replace several parts at once to save time', correct:false, riskDelta:15 }
+      ],
+      explanation:'Habit correction is the point here: follow the order of measure → isolate → verify → act.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'An abnormal 1.1V drop is found at the ground connector. What does it mean, and what\'s next?',
+          options:[
+            { name:'The ground connection is corroded/high-resistance — clean or replace it, then re-measure', correct:true, points:15 },
+            { name:'Replace the bulb itself right away', correct:false, riskDelta:10 },
+            { name:'Conclude this confirms the battery is weak', correct:false, riskDelta:10 }
+          ],
+          explanation:'A high drop at one point narrows the fault location precisely — the real payoff of measuring.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'What should you re-check before drawing a conclusion?',
+          options:[
+            { name:'Re-verify the resistance at a second point on the same path', correct:true, points:10 },
+            { name:'Replace the switch without re-checking', correct:false, riskDelta:10 }
+          ],
+          explanation:'A single reading is just a clue. Confirming with a second point is what separates diagnosis from guessing.' }
+      },
+      objectives:['Isolate a fault using battery/circuit measurements.', 'Build a habit of a diagnostic sequence before replacing parts.'],
+      teachingNotes:['Directly correct the habit of swapping parts first.', 'Don\'t accept conclusions drawn without a measurement.'],
+      prompts:['Why didn\'t you replace the bulb first?', 'Why was the second measurement necessary?'],
+      debrief:['Which measurement narrowed down the fault location?', 'How would you explain this procedure to a junior technician?'],
+      checklist:['Locate the ground point on a real headlight circuit diagram.', 'Practice a voltage-drop test with a multimeter.']
+    },
+    {
+      id: 'b3', color: 'blue', name: 'B3', title: 'Cable Routing Safety',
+      briefing: 'A new cable must be routed near the engine bay and inverter. One looks orange, one looks low-voltage. Verify before any cut or reroute.',
+      budget: 8,
+      evidence: [
+        { id:'diagram', tag:'A', name:'Wiring diagram', points:10,
+          reading:'Diagram confirms: Route A = HV 288-400V (orange spec), Route B = LV 12V (black/red spec).' },
+        { id:'jacket', tag:'B', name:'Cable jacket', points:10,
+          reading:'Jacket color near the inverter has faded — cannot be trusted by sight alone.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 40, investigateCost: 6,
+      shortcutLabel:'Cut whichever cable is in the way', shortcutNote:'A dangerous and unacceptable action taken without verification.',
+      question:'What is the correct judgment before any cable cut or reroute?',
+      options:[
+        { name:'If it\'s not orange, it\'s automatically safe to cut', correct:false, riskDelta:20 },
+        { name:'Use color as a clue only, and always confirm with the wiring diagram before acting', correct:true, points:20 },
+        { name:'Anything near the engine side is automatically low-voltage', correct:false, riskDelta:15 }
+      ],
+      explanation:'The core bridge skill is disciplined verification. A cue is not the same as a confirmed safe action.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'The diagram confirms the orange cable is HV, but an unmarked cable running parallel to it has a similarly faded jacket. What do you do?',
+          options:[
+            { name:'Treat the faded cable as unverified too, and re-cross-check the diagram/harness map', correct:true, points:15 },
+            { name:'Since it\'s no longer clearly orange, treat it as low-voltage', correct:false, riskDelta:20 },
+            { name:'Cut into a small section to check the color underneath', correct:false, riskDelta:25 }
+          ],
+          explanation:'Faded jackets are a known field hazard — the diagram remains the source of truth, not the jacket\'s current color.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'What is the one document that removes ambiguity about a cable\'s voltage class?',
+          options:[
+            { name:'The vehicle\'s official wiring diagram / harness routing map', correct:true, points:10 },
+            { name:'A technician\'s memory of a similar past job', correct:false, riskDelta:15 }
+          ],
+          explanation:'Memory and assumption are not verification. Before cutting or rerouting, only the wiring diagram is a reliable basis.' }
+      },
+      objectives:['Recognize orange cables as a danger cue.', 'Explain why color alone is not sufficient.', 'Build a habit of checking the wiring diagram before acting.'],
+      teachingNotes:['Teach this as behavior correction, not a quiz.', 'Connect it directly to accident prevention.'],
+      prompts:['If it wasn\'t orange, would that automatically mean safe?', 'What does the wiring diagram protect you from?'],
+      debrief:['Which evidence did you treat as a clue only?', 'How would you explain this rule to a junior technician?'],
+      checklist:['Cross-check a real harness against a wiring diagram.', 'Practice marking safe/danger zones on an engine-bay photo.']
+    },
+    {
+      id: 'l5', color: 'orange', name: 'L5', title: 'De-energized HV Inspection (DC-DC · OBC · Motor · Inverter)',
+      briefing: 'You need to inspect the DC-DC converter, OBC, motor, and inverter. Verify the HV system is fully de-energized before touching anything.',
+      budget: 8,
+      evidence: [
+        { id:'isolation', tag:'A', name:'Insulation resistance test', points:10,
+          reading:'Insulation resistance reading within normal range — no HV bus insulation issue.' },
+        { id:'residual', tag:'B', name:'Residual voltage check', points:10,
+          reading:'HV connector residual voltage confirmed at 0V — discharge complete.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 45, investigateCost: 6,
+      shortcutLabel:'Disconnect the connector right away without checking', shortcutNote:'The most dangerous judgment here — approaching HV components without verifying insulation or residual voltage.',
+      question:'What must always precede a visual inspection of the DC-DC/OBC/motor/inverter?',
+      options:[
+        { name:'Check both insulation resistance and residual voltage to verify a fully de-energized state', correct:true, points:20 },
+        { name:'If it looks fine visually, disassembly can begin right away', correct:false, riskDelta:25 },
+        { name:'Re-verification can be skipped if recent service records exist', correct:false, riskDelta:20 }
+      ],
+      explanation:'De-energization is a procedure verified fresh every time. Past records or appearance don\'t guarantee safety in this moment.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'Residual voltage reads 0V, but the capacitor-discharge indicator light is still on. What do you do?',
+          options:[
+            { name:'Trust the indicator light first and wait until discharge is actually complete', correct:true, points:15 },
+            { name:'Trust the meter reading only and proceed right away', correct:false, riskDelta:20 },
+            { name:'Dismiss the light as commonly unreliable', correct:false, riskDelta:20 }
+          ],
+          explanation:'When two signals conflict, follow the more conservative one. Trusting only one of the two is risky.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'Is using only one of the insulation tester or the residual voltage meter enough?',
+          options:[
+            { name:'No — they measure different risks, so both are needed', correct:true, points:10 },
+            { name:'The insulation tester alone is sufficient', correct:false, riskDelta:15 }
+          ],
+          explanation:'Insulation resistance measures leakage; residual voltage measures shock risk. Neither alone confirms a de-energized state.' }
+      },
+      objectives:['Distinguish insulation-resistance and residual-voltage checks.', 'Explain why de-energization is re-verified every time.'],
+      teachingNotes:['Make clear the two checks measure different risks.', 'Emphasize conservative judgment when the indicator and the meter conflict.'],
+      prompts:['Why isn\'t a past service record enough?', 'What does each of the two checks confirm?'],
+      debrief:['Which check mattered most this time?', 'What would you do if the indicator and the meter disagreed?'],
+      checklist:['Practice using an insulation tester on a real vehicle.', 'Demonstrate the residual-voltage check procedure.', 'Identify the DC-DC/OBC/motor/inverter locations on a real vehicle.']
+    },
+    {
+      id: 'l6', color: 'orange', name: 'L6', title: 'Battery Pack Removal & Installation (R&I)',
+      briefing: 'The battery pack must be removed. Verify interlock status and lift/support load-bearing condition.',
+      budget: 8,
+      evidence: [
+        { id:'interlock', tag:'A', name:'Service interlock check', points:10,
+          reading:'Service plug/interlock confirmed open — HV circuit is broken.' },
+        { id:'support', tag:'B', name:'Lift/support load check', points:10,
+          reading:'Jack stands confirmed stable and within rated load capacity.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 45, investigateCost: 6,
+      shortcutLabel:'Disconnect the battery connector without checking the interlock', shortcutNote:'A dangerous judgment — approaching the connector without confirming HV isolation.',
+      question:'What is the correct sequence before removing the battery pack?',
+      options:[
+        { name:'Confirm interlock open → confirm residual voltage → remove', correct:true, points:20 },
+        { name:'For lightweight models, the interlock check can be skipped', correct:false, riskDelta:25 },
+        { name:'Confirming lift stability alone is electrically sufficient too', correct:false, riskDelta:20 }
+      ],
+      explanation:'Mechanical safety (the lift) and electrical safety (interlock/residual voltage) are separate procedures — both must be checked independently.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'Even after opening the interlock, an HV warning light remains on the dash. What do you do?',
+          options:[
+            { name:'Hold the removal work until the cause of the warning is re-verified', correct:true, points:15 },
+            { name:'Ignore the warning light and proceed with removal as planned', correct:false, riskDelta:25 },
+            { name:'Pull the related fuse and continue', correct:false, riskDelta:20 }
+          ],
+          explanation:'If a warning persists after the interlock opens, the system may not be fully de-energized — confirming the cause comes first.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'Why is checking lift rated load necessary separately from electrical safety checks?',
+          options:[
+            { name:'Electrical risk and mechanical drop risk are different hazards, each requiring its own check', correct:true, points:10 },
+            { name:'Confirming electrical safety automatically guarantees mechanical safety too', correct:false, riskDelta:15 }
+          ],
+          explanation:'The two risks have different causes. Confirming one does not confirm the other.' }
+      },
+      objectives:['Check electrical and mechanical safety separately before battery R&I.', 'Explain the correct order of interlock and residual-voltage checks.'],
+      teachingNotes:['Don\'t let electrical and mechanical safety get lumped together.', 'Emphasize conservative judgment when a warning light and a meter reading conflict.'],
+      prompts:['Is checking the interlock alone enough?', 'Why is the lift check needed separately?'],
+      debrief:['Which check mattered most in this decision?', 'How would you maintain this order in a real shop?'],
+      checklist:['Locate the service plug/interlock on a real vehicle.', 'Check a lift/jack-stand rated-load table.', 'Draft a pre-removal checklist for battery R&I.']
+    },
+    {
+      id: 'l7', color: 'orange', name: 'L7', title: 'LOTO 5-Step Sequencing', type: 'sequence',
+      briefing: 'Arrange the 5 LOTO (Lockout/Tagout) steps in the correct order before any HV work. There is no partial credit — a single step out of order fails the attempt and you start over. Reach 3 consecutive flawless completions to move on.',
+      steps: [
+        { id:'notify', label:'Notify — inform affected personnel in advance', order:1 },
+        { id:'shutdown', label:'Shutdown — bring the equipment/system to a normal stop', order:2 },
+        { id:'deenergize', label:'De-energize — disconnect/isolate the main power source', order:3 },
+        { id:'locktag', label:'Lock & Tag — apply a lockout device and warning tag', order:4 },
+        { id:'verify', label:'Verify 0V — confirm zero voltage with a residual-voltage measurement', order:5 }
+      ],
+      requiredFlawless: 3,
+      objectives:['Reproduce the 5 LOTO steps in order.', 'Explain why there is no partial credit (the order itself is the safety).'],
+      teachingNotes:['Don\'t just have students memorize the order — have them explain why each step belongs where it is.', 'A failed attempt is still a learning moment — go over why it was wrong.'],
+      prompts:['Why must 0V verification be last?', 'Why is de-energizing without lock & tag dangerous?'],
+      debrief:['Which two steps were most confusing this time?', 'How would you build this sequence into muscle memory on the job?'],
+      checklist:['Handle real LOTO equipment (lockout kit, tags).', 'Demonstrate the 5 steps out loud.', 'Check each other\'s LOTO procedure with a partner.']
+    },
+    {
+      id: 'l8', color: 'orange', name: 'L8', title: 'Coolant & Brake Fluid Spec Management',
+      briefing: 'You need to top up the HV battery coolant and replace the brake fluid. Topping up without checking spec can compromise insulation or braking performance.',
+      budget: 6,
+      evidence: [
+        { id:'coolant', tag:'A', name:'Coolant spec check', points:10,
+          reading:'Confirmed spec: low-conductivity coolant designated specifically for the HV battery cooling loop.' },
+        { id:'brake', tag:'B', name:'Brake fluid DOT rating check', points:10,
+          reading:'Existing fluid confirmed DOT4 — the top-up fluid must match DOT4.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 35, investigateCost: 4,
+      shortcutLabel:'Top up with whatever fluid is in stock, without checking spec', shortcutNote:'A dangerous judgment made without spec verification — it can degrade insulation performance or braking performance.',
+      question:'What is the key principle to confirm before any top-up?',
+      options:[
+        { name:'Never mix fluids of different specs — confirm an exact match to the designated spec', correct:true, points:20 },
+        { name:'It\'s fine to mix if the colors look similar', correct:false, riskDelta:20 },
+        { name:'A small amount of mismatched spec isn\'t a big deal', correct:false, riskDelta:20 }
+      ],
+      explanation:'The HV cooling loop has an insulation-property issue, and the brake system has a grade-mixing issue — each is a separate safety concern. "Close enough" is risky in both.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'The coolant matches spec, but the brake fluid bottle\'s DOT label is worn off. What do you do?',
+          options:[
+            { name:'If the label is unclear, don\'t use it — get a new bottle', correct:true, points:15 },
+            { name:'Use it anyway since it looks similar to what was used before', correct:false, riskDelta:20 },
+            { name:'Mix it half-and-half with remaining stock', correct:false, riskDelta:25 }
+          ],
+          explanation:'A fluid with an unclear label is the same as a fluid whose spec can\'t be confirmed — the rule is: don\'t use it.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'Why does the HV battery cooling loop need a low-conductivity coolant?',
+          options:[
+            { name:'The cooling loop sits close to HV components, so insulation properties matter', correct:true, points:10 },
+            { name:'It\'s purely a branding difference with no real technical difference', correct:false, riskDelta:15 }
+          ],
+          explanation:'A high-conductivity coolant leaking near HV components can degrade insulation performance. This is a real safety issue, not just labeling.' }
+      },
+      objectives:['Build a habit of checking coolant/brake-fluid spec.', 'Explain the risk of mixing specs.'],
+      teachingNotes:['Directly correct the "close enough" judgment.', 'Explain separately why spec matters for the cooling system and for the brake system.'],
+      prompts:['Why shouldn\'t you use a fluid with a worn-off label?', 'Why is low-conductivity coolant different from ordinary antifreeze?'],
+      debrief:['Which spec check mattered most this time?', 'What would you change about inventory management?'],
+      checklist:['Check a real coolant/brake-fluid spec sheet.', 'Practice reading brake-fluid DOT rating labels.']
+    },
+    {
+      id: 'l9', color: 'red', name: 'L9', title: 'BMS Trust Trap · Capstone',
+      briefing: 'A battery over-temperature warning appeared, then cleared. Decide whether the vehicle is safe to return to the customer.',
+      budget: 10,
+      evidence: [
+        { id:'bms', tag:'A', name:'BMS warning history', points:10,
+          reading:'Warning cleared after current limiting and protection-mode activation — not a root-cause fix.' },
+        { id:'cooling', tag:'B', name:'Cooling system', points:10,
+          reading:'Cooling pump duty raised to 100%, performance still marginal — cause not logged.' }
+      ],
+      shortcutCost: 0, shortcutRisk: 40, investigateCost: 8,
+      shortcutLabel:'Release the vehicle right away since the warning cleared', shortcutNote:'A judgment that mistakes symptom suppression for system recovery — no root cause was confirmed before release.',
+      question:'What is the safest judgment before returning the vehicle to service?',
+      options:[
+        { name:'Since the warning cleared, it can go straight back into normal service', correct:false, riskDelta:25 },
+        { name:'A cleared warning may just mean the BMS is suppressing the symptom — hold the vehicle until root cause is found', correct:true, points:20 },
+        { name:'Ignore it since Blade Battery chemistry is inherently safer', correct:false, riskDelta:20 }
+      ],
+      explanation:'The real learning goal here is the service decision, not a slogan. If the cause is unresolved, hold and inspect — even with a quiet dashboard.',
+      followUp:{
+        onCorrect:{ tag:'Complication',
+          question:'Cooling performance is confirmed marginal but not yet critical. The customer is pushing hard for pickup today. What is the right call?',
+          options:[
+            { name:'Hold the vehicle, document the findings, and schedule a root-cause repair', correct:true, points:15 },
+            { name:'Release it since the warning is currently off', correct:false, riskDelta:25 },
+            { name:'Tell the customer it\'s fine just to avoid conflict', correct:false, riskDelta:25 }
+          ],
+          explanation:'Customer pressure is not evidence. The release decision must be driven by root-cause status, not convenience.' },
+        onIncorrect:{ tag:'Remediation',
+          question:'What is the key difference between "protection mode activated" and "problem resolved"?',
+          options:[
+            { name:'Protection mode only manages/limits the symptom — it does not fix the root cause', correct:true, points:10 },
+            { name:'In BMS logic, the two mean the same thing', correct:false, riskDelta:15 }
+          ],
+          explanation:'This is the core concept of the whole module: a quiet dashboard is not proof of a solved problem.' }
+      },
+      objectives:['Explain why a disappeared symptom alone is not sufficient evidence.', 'Choose hold/inspect over a risky release when the cause is unclear.'],
+      teachingNotes:['Don\'t let students answer with slogans — keep bringing them back to evidence.', 'Connect BMS logic to real shop decisions: hold/inspect/escalate/release.'],
+      prompts:['What evidence shows the BMS is protecting rather than resolving?', 'Would you release this vehicle to the customer right now? Why or why not?'],
+      debrief:['Which piece of evidence mattered most in this decision?', 'How would you explain this decision to a waiting customer?'],
+      checklist:['Practice pulling BMS warning history on a real diagnostic tool.', 'Inspect a real cooling system (pump, flow, fan).', 'Compare this case against a real BYD Blade Battery or hybrid battery example.']
+    }
+  ];
+  const LOTO_DISPLAY_ORDER = ['verify','notify','locktag','shutdown','deenergize']; // shuffled, not the correct order
+
+  const state = {
+    modeIndex: 0, evidenceDone: new Set(), budgetUsed: 0,
+    pathChosen: null, diagnosed: false, firstCorrect: null,
+    followUpOpen: false, followUpAnswered: false, ended: false,
+    modeScore: 0, penalty: 0, checklistChecked: new Set(),
+    lotoOrder: [], lotoFlawless: 0
+  };
+  const results = {}; // modeId -> {xp, penalty, status}
+  let totalXP = 0;
+  let combo = 1.0;
+  let azizLevel = 1;
+  const journal = [];
+
+  const el = id => document.getElementById(id);
+  const curMode = () => MODES[state.modeIndex];
+
+  function log(msg){
+    const t = new Date();
+    const ts = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    journal.unshift(`[${ts} · ${curMode().name}] ${msg}`);
+    if (journal.length > 12) journal.pop();
+  }
+
+  function setAziz(msg){ el('aziz-msg').textContent = msg; }
+
+  function resetModeState(){
+    state.evidenceDone = new Set();
+    state.budgetUsed = 0;
+    state.pathChosen = null;
+    state.diagnosed = false;
+    state.firstCorrect = null;
+    state.followUpOpen = false;
+    state.followUpAnswered = false;
+    state.ended = false;
+    state.modeScore = 0;
+    state.penalty = 0;
+    state.checklistChecked = new Set();
+    state.lotoOrder = [];
+    state.lotoFlawless = 0;
+  }
+
+  function modeUnlocked(i){
+    if (i === 0) return true;
+    const prev = results[MODES[i-1].id];
+    return prev && prev.status !== 'fail';
+  }
+
+  function selectMode(i){
+    if (!modeUnlocked(i)) { setAziz('You haven\'t passed the previous mode yet. Let\'s finish that first.'); return; }
+    state.modeIndex = i;
+    resetModeState();
+    setAziz('Gather your evidence when you\'re ready.');
+    render();
+  }
+
+  function useEvidence(ev){
+    if (state.ended || state.diagnosed || state.evidenceDone.has(ev.id)) return;
+    state.evidenceDone.add(ev.id);
+    state.modeScore += ev.points || 0;
+    log(`Evidence [${ev.tag}] ${ev.name} checked — "${ev.reading.slice(0, 24)}..."`);
+    setAziz('Good, that data gets you to the next step.');
+    render();
+  }
+
+  function clickLotoStep(stepId){
+    const mode = curMode();
+    if (state.ended) return;
+    const step = mode.steps.find(s => s.id === stepId);
+    if (state.lotoOrder.includes(stepId)) return;
+    const expected = state.lotoOrder.length + 1;
+    if (step.order === expected) {
+      state.lotoOrder.push(stepId);
+      log(`LOTO step ${expected}: "${step.label}" selected — correct.`);
+      if (state.lotoOrder.length === mode.steps.length) {
+        state.lotoFlawless += 1;
+        log(`Flawless run complete ${state.lotoFlawless}/${mode.requiredFlawless}.`);
+        if (state.lotoFlawless >= mode.requiredFlawless) {
+          setAziz('Three in a row, perfect. This procedure is muscle memory now.');
+          state.modeScore = 30 + (state.lotoFlawless - mode.requiredFlawless) * 5;
+          finalizeMode('pass', 'Completed the LOTO 5 steps flawlessly 3 times in a row. Repeating until the order becomes muscle memory is the whole point of this drill.');
+        } else {
+          setAziz(`Nice, flawless run ${state.lotoFlawless}. ${mode.requiredFlawless - state.lotoFlawless} more to go.`);
+          state.lotoOrder = [];
+        }
+      }
+    } else {
+      state.lotoFlawless = 0;
+      state.lotoOrder = [];
+      log(`LOTO order error: chose "${step.label}" as step ${expected} — starting over.`);
+      setAziz('That order was wrong. Think about why that step can\'t go there, then try again.');
+    }
+    render();
+  }
+
+  function choosePath(kind){
+    const mode = curMode();
+    if (state.ended || state.evidenceDone.size < mode.evidence.length || state.pathChosen) return;
+    state.pathChosen = kind;
+    if (kind === 'investigate') {
+      state.budgetUsed += mode.investigateCost;
+      log(`Chose the investigate path — used ${mode.investigateCost} min of budget.`);
+      setAziz('A careful investigation leaves a record. Let\'s move to the judgment.');
+      state.diagnosed = true;
+    } else {
+      state.budgetUsed += mode.investigateCost * 2;
+      state.penalty += mode.shortcutRisk;
+      log(`Chose the shortcut — "${mode.shortcutLabel}" · ×2 penalty applied.`);
+      setAziz('Don\'t cut corners. Solve it with data.');
+      finalizeMode('fail', mode.shortcutNote);
+    }
+    render();
+  }
+
+  function answerDecision(index){
+    if (state.firstCorrect !== null) return;
+    const mode = curMode();
+    const opt = mode.options[index];
+    state.firstCorrect = opt.correct;
+    state.modeScore += opt.points || 0;
+    state.penalty += opt.riskDelta || 0;
+    log(`Judgment: "${opt.name}" → ${opt.correct ? 'correct' : 'incorrect'}`);
+    setAziz(opt.correct ? 'That\'s it. You worked it out from the data.' : 'Hold on — what\'s that judgment based on? Go back and check the evidence.');
+    document.querySelectorAll('#decision-opts .opt-btn').forEach((btn, i) => {
+      if (mode.options[i].correct) btn.classList.add('correct');
+      if (i === index && !opt.correct) btn.classList.add('wrong');
+    });
+    state.followUpOpen = true;
+    render();
+  }
+
+  function followUpBranch(){
+    const mode = curMode();
+    return state.firstCorrect ? mode.followUp.onCorrect : mode.followUp.onIncorrect;
+  }
+
+  function answerFollowUp(index){
+    if (state.followUpAnswered) return;
+    const branch = followUpBranch();
+    const opt = branch.options[index];
+    state.followUpAnswered = true;
+    state.modeScore += opt.points || 0;
+    state.penalty += opt.riskDelta || 0;
+    log(`Follow-up judgment (${branch.tag}): "${opt.name}" → ${opt.correct ? 'correct' : 'incorrect'}`);
+    document.querySelectorAll('#followup-opts .opt-btn').forEach((btn, i) => {
+      if (branch.options[i].correct) btn.classList.add('correct');
+      if (i === index && !opt.correct) btn.classList.add('wrong');
+    });
+    let status;
+    if (state.firstCorrect && opt.correct) status = 'pass';
+    else if (!state.firstCorrect && opt.correct) status = 'partial';
+    else status = 'fail';
+    finalizeMode(status, branch.explanation);
+  }
+
+  function finalizeMode(status, copy){
+    state.ended = true;
+    if (status === 'pass') { combo = Math.min(2.5, combo + 0.5); azizLevel += 1; setAziz('You\'re good to move to the next mode.'); }
+    else if (status === 'partial') { setAziz('You needed a retry this time, but you recovered. Keep going.'); }
+    else { combo = 1.0; setAziz('This judgment needs a second look. Let\'s review the Journal log together.'); }
+    const xp = Math.round((state.modeScore) * combo);
+    totalXP += xp;
+    results[curMode().id] = { xp, penalty: state.penalty, status };
+    log(`Mode ended — status: ${status.toUpperCase()}, XP +${xp}, penalty ${state.penalty}`);
+    el('result-copy').textContent = copy || '';
+    render();
+  }
+
+  function toggleChecklist(i){
+    if (state.checklistChecked.has(i)) state.checklistChecked.delete(i);
+    else state.checklistChecked.add(i);
+    render();
+  }
+
+  function toggleInstructor(){
+    const panel = el('instr-panel');
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    el('instr-toggle').textContent = willOpen ? 'Hide Instructor Layer' : 'Show Instructor Layer';
+    if (willOpen) fillInstructor();
+  }
+
+  function nextMode(){
+    if (state.modeIndex < MODES.length - 1) {
+      selectMode(state.modeIndex + 1);
+    } else {
+      setAziz('You completed all 8 modes, B1 through L9. Great work — the next step is validating this against real vehicle data.');
+    }
+  }
+
+  function downloadText(filename, content){
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportMode(){
+    const m = curMode();
+    const lines = [];
+    lines.push(`# ${m.name} · ${m.title}`, '');
+    if (m.type === 'sequence') {
+      lines.push(`**Format:** sequencing (3 consecutive flawless runs required)`, '');
+      lines.push('## Briefing', m.briefing, '');
+      lines.push('## Objectives'); m.objectives.forEach(x => lines.push(`- ${x}`)); lines.push('');
+      lines.push('## Teaching Notes'); m.teachingNotes.forEach(x => lines.push(`- ${x}`)); lines.push('');
+      lines.push('## Instructor Prompts'); m.prompts.forEach(x => lines.push(`- ${x}`)); lines.push('');
+      lines.push('## Correct Order');
+      m.steps.slice().sort((a,b) => a.order - b.order).forEach(s => lines.push(`${s.order}. ${s.label}`));
+      lines.push('', '## Debrief'); m.debrief.forEach(x => lines.push(`1. ${x}`)); lines.push('');
+      lines.push('## Real Vehicle Practice Checklist'); m.checklist.forEach(x => lines.push(`- [ ] ${x}`));
+      downloadText(`${m.id}-lesson-plan.md`, lines.join('\n'));
+      return;
+    }
+    lines.push(`**Investigate Budget:** ${m.budget} min`, '');
+    lines.push('## Briefing', m.briefing, '');
+    lines.push('## Objectives'); m.objectives.forEach(x => lines.push(`- ${x}`)); lines.push('');
+    lines.push('## Teaching Notes'); m.teachingNotes.forEach(x => lines.push(`- ${x}`)); lines.push('');
+    lines.push('## Instructor Prompts'); m.prompts.forEach(x => lines.push(`- ${x}`)); lines.push('');
+    lines.push('## Judgment Point', m.question);
+    m.options.forEach((o,i) => lines.push(`  ${String.fromCharCode(65+i)}. ${o.name}${o.correct?' (correct)':''}`));
+    lines.push('', `## Branch — If Correct (${m.followUp.onCorrect.tag})`, m.followUp.onCorrect.question);
+    m.followUp.onCorrect.options.forEach((o,i) => lines.push(`  ${String.fromCharCode(65+i)}. ${o.name}${o.correct?' (correct)':''}`));
+    lines.push('', `## Branch — If Incorrect (${m.followUp.onIncorrect.tag})`, m.followUp.onIncorrect.question);
+    m.followUp.onIncorrect.options.forEach((o,i) => lines.push(`  ${String.fromCharCode(65+i)}. ${o.name}${o.correct?' (correct)':''}`));
+    lines.push('', '## Debrief'); m.debrief.forEach(x => lines.push(`1. ${x}`)); lines.push('');
+    lines.push('## Real Vehicle Practice Checklist'); m.checklist.forEach(x => lines.push(`- [ ] ${x}`));
+    downloadText(`${m.id}-lesson-plan.md`, lines.join('\n'));
+  }
+
+  function fillInstructor(){
+    const m = curMode();
+    el('obj-list').innerHTML = m.objectives.map(x => `<li>${x}</li>`).join('');
+    el('notes-list').innerHTML = m.teachingNotes.map(x => `<li>${x}</li>`).join('');
+    el('prompt-list').innerHTML = m.prompts.map(x => `<li>${x}</li>`).join('');
+    el('debrief-list').innerHTML = m.debrief.map(x => `<li>${x}</li>`).join('');
+    el('checklist-list').innerHTML = m.checklist.map((item, i) =>
+      `<label class="checklist-item ${state.checklistChecked.has(i)?'checked':''}">
+        <input type="checkbox" ${state.checklistChecked.has(i)?'checked':''} data-i="${i}"/><span>${item}</span>
+      </label>`
+    ).join('');
+    document.querySelectorAll('#checklist-list input').forEach(inp => {
+      inp.addEventListener('change', () => toggleChecklist(parseInt(inp.dataset.i,10)));
+    });
+  }
+
+  function updateHud(){
+    const mode = curMode();
+    el('hud-mode').textContent = mode.name;
+    el('hud-xp').textContent = totalXP;
+    el('hud-combo').textContent = `×${combo.toFixed(1)}`;
+    if (mode.type === 'sequence') {
+      el('hud-budget').closest('.hud-stat').querySelector('.k').textContent = 'Flawless Runs';
+      el('hud-budget').textContent = `${state.lotoFlawless} / ${mode.requiredFlawless}`;
+      el('hud-budget').closest('.hud-stat').classList.remove('over');
+    } else {
+      el('hud-budget').closest('.hud-stat').querySelector('.k').textContent = 'Investigate Budget';
+      el('hud-budget').textContent = `${state.budgetUsed} / ${mode.budget}min`;
+      el('hud-budget').closest('.hud-stat').classList.toggle('over', state.budgetUsed > mode.budget);
+    }
+    el('aziz-meta').textContent = `AZIZ · Lv ${azizLevel}`;
+  }
+
+  function renderModeList(){
+    el('mode-list').innerHTML = MODES.map((m,i) => {
+      const r = results[m.id];
+      const locked = !modeUnlocked(i);
+      const badge = r ? `<span class="mode-badge ${r.status}">${r.status === 'pass' ? 'Pass' : r.status === 'partial' ? 'Recovered' : 'Fail'}</span>` : (locked ? '<span class="mode-badge">🔒</span>' : '');
+      return `<div class="mode-tab ${m.color} ${i===state.modeIndex?'active':''} ${locked?'locked':''}" data-i="${i}">
+        <div class="mt-top"><span>${m.name}</span>${badge}</div>
+        <div class="mt-title">${m.title}</div>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => selectMode(parseInt(tab.dataset.i, 10)));
+    });
+  }
+
+  function render(){
+    const mode = curMode();
+    updateHud();
+    renderModeList();
+    el('lesson-title').textContent = `${mode.name} · ${mode.title}`;
+    el('briefing').textContent = mode.briefing;
+
+    const isSequence = mode.type === 'sequence';
+    el('evidence-panel-title').hidden = isSequence;
+    el('evidence-grid').hidden = isSequence;
+    el('sequence-zone').hidden = !isSequence;
+    el('path-row').hidden = isSequence || !((state.evidenceDone && state.evidenceDone.size >= (mode.evidence ? mode.evidence.length : 0) && !state.pathChosen && !state.ended) || state.pathChosen);
+    el('decision-zone').hidden = isSequence || !state.diagnosed;
+    el('followup-zone').hidden = isSequence || !(state.followUpOpen && followUpBranch());
+
+    if (isSequence) {
+      el('sequence-slots').innerHTML = mode.steps.map((_, i) => {
+        const chosenId = state.lotoOrder[i];
+        const chosen = chosenId ? mode.steps.find(s => s.id === chosenId) : null;
+        return `<div style="flex:1;border:1.5px dashed var(--line-2);border-radius:10px;padding:8px;text-align:center;font-size:11px;min-height:44px;display:flex;align-items:center;justify-content:center;${chosen?'border-style:solid;border-color:var(--scope);color:var(--scope);':'color:var(--muted);'}">${chosen ? chosen.label.split(' — ')[0] : i+1}</div>`;
+      }).join('');
+      el('sequence-cards').innerHTML = LOTO_DISPLAY_ORDER.map(id => {
+        const step = mode.steps.find(s => s.id === id);
+        const used = state.lotoOrder.includes(id);
+        return `<div class="evidence-card ${used?'done':''}" data-id="${id}" style="${used?'':'cursor:pointer;'}">
+          <div class="ec-name">${step.label}</div>
+        </div>`;
+      }).join('');
+      document.querySelectorAll('#sequence-cards .evidence-card').forEach(card => {
+        card.addEventListener('click', () => clickLotoStep(card.dataset.id));
+      });
+      el('sequence-progress').textContent = state.ended
+        ? 'Complete.'
+        : `Progress: ${state.lotoOrder.length}/${mode.steps.length} · flawless runs ${state.lotoFlawless}/${mode.requiredFlawless}`;
+    } else {
+      el('evidence-grid').innerHTML = mode.evidence.map(ev => {
+        const done = state.evidenceDone.has(ev.id);
+        return `<div class="evidence-card ${done?'done':''}" data-id="${ev.id}">
+          <div class="ec-tag">[${ev.tag}]</div>
+          <div class="ec-name">${ev.name}</div>
+          ${done ? `<div class="ec-reading">${ev.reading}</div>` : ''}
+        </div>`;
+      }).join('');
+      document.querySelectorAll('#evidence-grid .evidence-card').forEach(card => {
+        const ev = mode.evidence.find(e => e.id === card.dataset.id);
+        card.addEventListener('click', () => useEvidence(ev));
+      });
+
+      el('path-investigate-cost').textContent = `Uses ${mode.investigateCost} min`;
+      el('path-shortcut-cost').textContent = `Equivalent to ${mode.investigateCost * 2} min · ×2 penalty`;
+      const readyForPath = state.evidenceDone.size >= mode.evidence.length && !state.pathChosen && !state.ended;
+      el('path-investigate').disabled = !readyForPath;
+      el('path-shortcut').disabled = !readyForPath;
+
+      if (state.diagnosed) {
+        el('decision-q').textContent = mode.question;
+        el('decision-opts').innerHTML = mode.options.map((o,i) =>
+          `<button class="opt-btn" data-i="${i}">${String.fromCharCode(65+i)}. ${o.name}</button>`
+        ).join('');
+        document.querySelectorAll('#decision-opts .opt-btn').forEach(btn => {
+          btn.addEventListener('click', () => { if (state.firstCorrect === null) answerDecision(parseInt(btn.dataset.i,10)); });
+          if (state.firstCorrect !== null) btn.style.pointerEvents = 'none';
+        });
+      }
+
+      const branch = state.followUpOpen ? followUpBranch() : null;
+      if (branch) {
+        el('followup-tag').className = `tag ${branch.tag === 'Complication' ? 'complication' : 'remediation'}`;
+        el('followup-tag').textContent = branch.tag;
+        el('followup-q').textContent = branch.question;
+        el('followup-opts').innerHTML = branch.options.map((o,i) =>
+          `<button class="opt-btn" data-i="${i}">${String.fromCharCode(65+i)}. ${o.name}</button>`
+        ).join('');
+        document.querySelectorAll('#followup-opts .opt-btn').forEach(btn => {
+          btn.addEventListener('click', () => { if (!state.followUpAnswered) answerFollowUp(parseInt(btn.dataset.i,10)); });
+          if (state.followUpAnswered) btn.style.pointerEvents = 'none';
+        });
+      }
+    }
+
+    const result = results[mode.id];
+    el('result-zone').hidden = !(state.ended && result);
+    if (state.ended && result) {
+      el('result-xp').textContent = `+${result.xp}`;
+      el('result-penalty').textContent = result.penalty;
+      el('result-combo').textContent = `×${combo.toFixed(1)}`;
+      el('result-status').textContent = result.status === 'pass' ? 'Pass' : result.status === 'partial' ? 'Recovered' : 'Fail';
+      el('next-mode-btn').textContent = state.modeIndex < MODES.length - 1 ? 'Next Mode' : 'Demo Complete';
+      el('next-mode-btn').disabled = state.modeIndex === MODES.length - 1 && results[MODES[MODES.length-1].id] && results[MODES[MODES.length-1].id].status === 'fail';
+    }
+
+    el('journal-log').innerHTML = journal.map(x => `<div>${x}</div>`).join('') || '<div style="color:var(--muted)">No entries yet.</div>';
+
+    if (!el('instr-panel').hidden) fillInstructor();
+  }
+
+  el('path-investigate').addEventListener('click', () => choosePath('investigate'));
+  el('path-shortcut').addEventListener('click', () => choosePath('shortcut'));
+  el('next-mode-btn').addEventListener('click', nextMode);
+  el('instr-toggle').addEventListener('click', toggleInstructor);
+  el('export-btn').addEventListener('click', exportMode);
+
+  resetModeState();
+  render();
+</script>
+</body>
+</html>
