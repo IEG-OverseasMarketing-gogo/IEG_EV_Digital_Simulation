@@ -144,7 +144,7 @@
 <body>
 
 <div id="pw-gate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#132030,#1e3a52);display:flex;align-items:center;justify-content:center;font-family:Inter,'Segoe UI',Arial,sans-serif;">
-  <div style="background:#ffffff;border-radius:18px;padding:34px 30px;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);">
+  <div id="gate-card" style="background:#ffffff;border-radius:18px;padding:34px 30px;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);">
     <div style="font-size:30px;margin-bottom:8px;">🔒</div>
     <h2 style="color:#132030;font-size:18px;margin:0 0 6px;">EV Line 5D Digital Twin — Trial Access</h2>
     <p style="color:#5b6b7c;font-size:13px;margin:0 0 18px;">Enter the ID and password provided by your IEG representative.</p>
@@ -158,7 +158,21 @@
 (function(){
   var GATE_ID = "lspgo";
   var GATE_PW = "IEGtrial2026!";
+  // Trial window — edit this single line to change the expiry date.
+  var TRIAL_EXPIRES = new Date("2026-09-14T23:59:59");
+
   var gate = document.getElementById('pw-gate');
+  var card = document.getElementById('gate-card');
+
+  if (new Date() > TRIAL_EXPIRES) {
+    card.innerHTML =
+      '<div style="font-size:30px;margin-bottom:8px;">⏳</div>' +
+      '<h2 style="color:#132030;font-size:18px;margin:0 0 6px;">14-Day Evaluation Has Ended</h2>' +
+      '<p style="color:#5b6b7c;font-size:13px;margin:0 0 16px;">This trial window closed on ' + TRIAL_EXPIRES.toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'}) + '. To continue or renew access, contact your IEG representative.</p>' +
+      '<a href="mailto:kellycho824@ieg.kr?subject=IEG%20EV%20Line%20Suite%20—%20Trial%20renewal%20request" style="display:inline-block;width:100%;box-sizing:border-box;padding:11px 12px;border-radius:9px;background:linear-gradient(90deg,#5ee6b5,#57c7ff);color:#08222c;font-weight:800;font-size:14px;text-decoration:none;">Request Renewed Access</a>';
+    return;
+  }
+
   var idInput = document.getElementById('gate-id');
   var pwInput = document.getElementById('gate-pw');
   var err = document.getElementById('gate-error');
@@ -193,7 +207,7 @@
     <h1>14-Day Free Evaluation for TVET Partners in Uzbekistan &amp; Indonesia</h1>
     <p>Five simulators, one evaluation window. Explore ICE→EV bridge training, hybrid predictive-maintenance reading, gamified diagnostic missions, and robot line predictive maintenance — no install, no account, and no vehicle-specific licensing required to start.</p>
     <div class="hero-cta-row">
-      <button class="btn primary" id="start-trial-btn">Start 14-Day Evaluation</button>
+      <span class="btn primary" style="cursor:default;">Evaluation Window Open</span>
       <a class="btn ghost" href="#suite">See the 5 simulators</a>
       <a class="btn ghost" href="#instructor-script">Jump to Instructor's Script</a>
       <span id="trial-banner"></span>
@@ -376,34 +390,22 @@
   </div>
 
   <div class="footnote">
-    This suite trains brand-agnostic HV judgment and hybrid-drivetrain data literacy. It is not endorsed by or affiliated with any OEM, and does not contain vehicle-specific technical data for any specific platform. Every credential issued through this suite is an IEG credential. The 14-day counter above is a courtesy reminder stored in your browser only — it does not restrict access to any simulator, and clearing your browser data resets it. For licensing, full deployment, or questions about this evaluation, contact your IEG representative.
+    This suite trains brand-agnostic HV judgment and hybrid-drivetrain data literacy. It is not endorsed by or affiliated with any OEM, and does not contain vehicle-specific technical data for any specific platform. Every credential issued through this suite is an IEG credential. The 14-day evaluation window locks access to this suite after its expiry date, checked against your device's clock — this is client-side, not a secured backend, so treat it as a strong deterrent rather than absolute protection. For licensing, full deployment, or questions about this evaluation, contact your IEG representative.
   </div>
 
 </div>
 
 <script>
-  const KEY = 'ieg-ev-line-trial-start';
-  function fmtDaysLeft(startIso){
-    const start = new Date(startIso);
-    const now = new Date();
-    const elapsed = Math.floor((now - start) / 86400000);
-    return Math.max(0, 14 - elapsed);
-  }
+  const TRIAL_EXPIRES = new Date("2026-09-14T23:59:59");
   function renderBanner(){
-    const start = localStorage.getItem(KEY);
     const banner = document.getElementById('trial-banner');
-    const btn = document.getElementById('start-trial-btn');
-    if (start) {
-      const left = fmtDaysLeft(start);
-      banner.textContent = left > 0 ? `Day ${14 - left + 1} of 14 · ${left} day${left === 1 ? '' : 's'} left (browser reminder only)` : 'Evaluation window elapsed — reminder only, tools remain open.';
-      banner.classList.add('show');
-      btn.textContent = 'Restart 14-Day Counter';
-    }
+    const msLeft = TRIAL_EXPIRES - new Date();
+    const daysLeft = Math.max(0, Math.ceil(msLeft / 86400000));
+    banner.textContent = daysLeft > 0
+      ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left · trial locks on ${TRIAL_EXPIRES.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`
+      : 'Evaluation window has closed.';
+    banner.classList.add('show');
   }
-  document.getElementById('start-trial-btn').addEventListener('click', () => {
-    localStorage.setItem(KEY, new Date().toISOString());
-    renderBanner();
-  });
   renderBanner();
 </script>
 </body>
