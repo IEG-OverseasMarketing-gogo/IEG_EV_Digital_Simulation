@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IEG · EV Line 5D Digital Twin Suite — 14-Day Evaluation</title>
+<style>
+  :root{
+    --paper:#f4f6f7;
+    --panel:#ffffff;
+    --line:#dfe4e6;
+    --navy:#132030;
+    --muted:#5b6b7c;
+    --teal:#1e6f9f;
+    --teal-dim:#e8f1f6;
+    --amber:#b25f13;
+    --amber-dim:#fbeee0;
+    --green:#1c8a5a;
+    --green-dim:#e6f5ee;
+    --radius:16px;
+    --sans: Inter, "Segoe UI", "Pretendard", Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);color:var(--navy);font-family:var(--sans);line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 80px;}
+  a{color:inherit;}
+
+  /* Header */
+  header{display:flex;align-items:center;gap:12px;margin-bottom:26px;}
+  header img{width:42px;height:auto;border-radius:6px;}
+  .brand-name{font-size:12px;font-weight:800;color:var(--navy);}
+  .brand-sub{font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+
+  /* Hero */
+  .hero{
+    background:linear-gradient(135deg, var(--navy), #1e3a52);
+    color:#fff;border-radius:20px;padding:38px 34px;margin-bottom:28px;
+    position:relative;overflow:hidden;
+  }
+  .hero::after{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 85% 10%, rgba(30,111,159,.35), transparent 55%);
+    pointer-events:none;
+  }
+  .hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7fc3e8;margin-bottom:10px;}
+  .hero h1{font-size:clamp(24px,3.4vw,36px);margin:0 0 12px;font-weight:800;line-height:1.25;max-width:760px;}
+  .hero p{color:#c7d5df;max-width:640px;font-size:14.5px;margin:0 0 22px;}
+  .hero-cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+  .btn{
+    border:none;border-radius:11px;padding:12px 20px;font-size:13.5px;font-weight:800;cursor:pointer;
+    font-family:var(--sans);
+  }
+  .btn.primary{background:linear-gradient(90deg,#5ee6b5,#57c7ff);color:#08222c;}
+  .btn.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.28);}
+  #trial-banner{
+    font-family:var(--mono);font-size:12px;color:#c7d5df;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 12px;display:none;
+  }
+  #trial-banner.show{display:inline-block;}
+
+  /* Market context */
+  .section-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);font-weight:800;margin:0 0 10px;}
+  .market-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:30px;}
+  .market-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .market-card h3{margin:0 0 8px;font-size:16px;}
+  .market-card p{margin:0;color:var(--muted);font-size:13.5px;}
+  .market-card .src{margin-top:10px;font-size:11px;color:#93a0a9;}
+
+  /* Suite grid */
+  .suite-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:34px;}
+  .tool-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;display:flex;flex-direction:column;gap:10px;
+  }
+  .tool-tag{
+    display:inline-block;align-self:flex-start;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;
+  }
+  .tool-tag.full{background:var(--green-dim);color:var(--green);}
+  .tool-tag.preview{background:var(--amber-dim);color:var(--amber);}
+  .tool-card h3{margin:0;font-size:17px;}
+  .tool-card .desc{color:var(--muted);font-size:13px;margin:0;}
+  .tool-card .covers{font-size:12px;color:var(--navy);background:var(--teal-dim);border-radius:8px;padding:8px 10px;}
+  .tool-card .covers b{color:var(--teal);}
+  .tool-card .launch-row{margin-top:auto;display:flex;gap:8px;padding-top:6px;}
+  .launch-btn{
+    text-decoration:none;display:inline-block;background:var(--navy);color:#fff;font-size:12.5px;font-weight:800;
+    padding:10px 16px;border-radius:9px;
+  }
+  .launch-btn:hover{background:var(--teal);}
+  .file-note{font-family:var(--mono);font-size:10.5px;color:#93a0a9;align-self:center;}
+
+  /* Instructor script */
+  .script-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:6px 22px 22px;margin-bottom:26px;}
+  .day-block{border-top:1px solid var(--line);padding:18px 0;}
+  .day-block:first-of-type{border-top:none;}
+  .day-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+  .day-badge{font-family:var(--mono);font-size:11px;font-weight:800;color:#fff;background:var(--teal);padding:3px 10px;border-radius:999px;}
+  .day-title{font-size:15px;font-weight:800;}
+  .day-goal{color:var(--muted);font-size:12.5px;margin:0 0 10px;}
+  .say{
+    border-left:3px solid var(--amber);background:var(--amber-dim);border-radius:0 8px 8px 0;
+    padding:9px 12px;margin:8px 0;font-size:13px;font-style:italic;
+  }
+  .say b{font-style:normal;color:var(--amber);}
+  .walk{font-size:12.5px;color:var(--navy);margin:8px 0;}
+  .walk b{color:var(--teal);}
+
+  /* Footer */
+  .footnote{
+    margin-top:10px;border-top:1px dashed var(--line);padding-top:16px;font-size:11.5px;color:var(--muted);line-height:1.7;
+  }
+  .footnote a{color:var(--teal);}
+
+  /* Roadmap / subscription tiers */
+  .track-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:26px;}
+  .track-col h3{font-size:14px;margin:0 0 4px;}
+  .track-col .track-sub{font-size:12px;color:var(--muted);margin:0 0 12px;}
+  .tier-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .tier-card.current{border-color:var(--teal);background:var(--teal-dim);}
+  .tier-head{display:flex;justify-content:space-between;align-items:baseline;}
+  .tier-name{font-weight:800;font-size:13.5px;}
+  .tier-badge{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--teal);}
+  .tier-includes{font-size:12px;color:var(--muted);margin:0;}
+  .tier-cta{
+    align-self:flex-start;text-decoration:none;font-size:11.5px;font-weight:800;color:#fff;background:var(--navy);
+    padding:7px 13px;border-radius:8px;margin-top:4px;
+  }
+  .tier-cta:hover{background:var(--teal);}
+
+  @media (max-width:820px){
+    .market-grid, .suite-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="pw-gate" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#132030,#1e3a52);display:flex;align-items:center;justify-content:center;font-family:Inter,'Segoe UI',Arial,sans-serif;">
+  <div id="gate-card" style="background:#ffffff;border-radius:18px;padding:34px 30px;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);">
+    <div style="font-size:30px;margin-bottom:8px;">🔒</div>
+    <h2 style="color:#132030;font-size:18px;margin:0 0 6px;">EV Line 5D Digital Twin — Trial Access</h2>
+    <p style="color:#5b6b7c;font-size:13px;margin:0 0 18px;">Enter the ID and password provided by your IEG representative.</p>
+    <input type="text" id="gate-id" placeholder="ID" autocomplete="username" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid #dfe4e6;background:#f4f6f7;color:#132030;font-size:14px;margin-bottom:8px;">
+    <input type="password" id="gate-pw" placeholder="Password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid #dfe4e6;background:#f4f6f7;color:#132030;font-size:14px;margin-bottom:10px;">
+    <button id="gate-submit" style="width:100%;padding:11px 12px;border:none;border-radius:9px;background:linear-gradient(90deg,#5ee6b5,#57c7ff);color:#08222c;font-weight:800;font-size:14px;cursor:pointer;">Enter</button>
+    <div id="gate-error" style="color:#c0392b;font-size:12px;margin-top:10px;min-height:14px;"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var GATE_ID = "admgo";
+  var GATE_PW = "IEGtrial2026!";
+  // Trial window — edit this single line to change the expiry date.
+  var TRIAL_EXPIRES = new Date("2026-09-14T23:59:59");
+
+  var gate = document.getElementById('pw-gate');
+  var card = document.getElementById('gate-card');
+
+  if (new Date() > TRIAL_EXPIRES) {
+    card.innerHTML =
+      '<div style="font-size:30px;margin-bottom:8px;">⏳</div>' +
+      '<h2 style="color:#132030;font-size:18px;margin:0 0 6px;">14-Day Evaluation Has Ended</h2>' +
+      '<p style="color:#5b6b7c;font-size:13px;margin:0 0 16px;">This trial window closed on ' + TRIAL_EXPIRES.toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'}) + '. To continue or renew access, contact your IEG representative.</p>' +
+      '<a href="mailto:kellycho824@ieg.kr?subject=IEG%20EV%20Line%20Suite%20—%20Trial%20renewal%20request" style="display:inline-block;width:100%;box-sizing:border-box;padding:11px 12px;border-radius:9px;background:linear-gradient(90deg,#5ee6b5,#57c7ff);color:#08222c;font-weight:800;font-size:14px;text-decoration:none;">Request Renewed Access</a>';
+    return;
+  }
+
+  var idInput = document.getElementById('gate-id');
+  var pwInput = document.getElementById('gate-pw');
+  var err = document.getElementById('gate-error');
+  function tryUnlock(){
+    if(idInput.value.trim() === GATE_ID && pwInput.value === GATE_PW){
+      gate.style.display = 'none';
+    } else {
+      err.textContent = 'Incorrect ID or password. Try again.';
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+  document.getElementById('gate-submit').addEventListener('click', tryUnlock);
+  pwInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') tryUnlock(); });
+  idInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') pwInput.focus(); });
+  window.addEventListener('load', function(){ idInput.focus(); });
+})();
+</script>
+
+<div class="wrap">
+
+  <header>
+    <img src="data:image/png;base64,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" alt="IEG logo" />
+    <div>
+      <div class="brand-name">IEG co., Ltd.</div>
+      <div class="brand-sub">Smart Manufacturing &amp; TVET Equipment</div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-eyebrow">EV Line · 5D Digital Twin Suite</div>
+    <h1>14-Day Free Evaluation for TVET Partners in Uzbekistan &amp; Indonesia</h1>
+    <p>Five simulators, one evaluation window. Explore ICE→EV bridge training, hybrid predictive-maintenance reading, gamified diagnostic missions, and robot line predictive maintenance — no install, no account, and no vehicle-specific licensing required to start.</p>
+    <div class="hero-cta-row">
+      <span class="btn primary" style="cursor:default;">Evaluation Window Open</span>
+      <a class="btn ghost" href="#suite">See the 5 simulators</a>
+      <a class="btn ghost" href="#instructor-script">Jump to Instructor's Script</a>
+      <span id="trial-banner"></span>
+    </div>
+  </div>
+
+  <div class="section-title">Why Uzbekistan &amp; Indonesia</div>
+  <div class="market-grid">
+    <div class="market-card">
+      <h3>Indonesia — ICE-majority, hybrid-first</h3>
+      <p>Electrified sales (BEV+PHEV+HEV) reached roughly 15% of passenger sales by Q2 2025, up from ~10% in Q1 — meaningful but still a fast-moving, inconsistently-defined market. Toyota's own ~US$1.8B Indonesia investment plan starts with hybrid production before scaling to full battery-EV. In Indonesia this evaluation is positioned for LSP GO (a professional certification body), aligned to SKKNI No. 8/2024 EV competency mapping — not a general secondary-school rollout.</p>
+      <div class="src">Source: ICCT, PwC Indonesia EV Readiness 2025, REGlobal, IndexBox — figures rounded, directional.</div>
+    </div>
+    <div class="market-card">
+      <h3>Uzbekistan — TVET modernization underway</h3>
+      <p>Vocational training centers are actively upgrading curricula to cover HV-vehicle safety and diagnostic judgment alongside long-standing ICE expertise. The bridge-module format in this suite is built specifically for that transition — teaching identification and verification habits before any brand-specific certification track.</p>
+      <div class="src">Positioning note: no country-specific market statistics are cited here — none are sourced yet for this market.</div>
+    </div>
+  </div>
+
+  <div class="section-title" id="suite">The 5 Simulators</div>
+
+  <div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);background:var(--teal-dim);display:inline-block;padding:5px 12px;border-radius:999px;margin-bottom:10px;">Service &amp; Diagnostic Track</div>
+  <div class="suite-grid">
+
+    <div class="tool-card">
+      <span class="tool-tag full">Full curriculum</span>
+      <h3>Hybrid Drivetrain — 6D Digital Twin</h3>
+      <p class="desc">Conventional / Parallel / Series architecture explorer with live readouts (SOC, Wheel Power Source, Energy Recaptured, Braking Energy Fate), a diagnostic comparison table, and a field-application quiz.</p>
+      <div class="covers"><b>Trains:</b> reading hybrid drivetrain data as a trend, not just a snapshot — the foundation for predictive maintenance.</div>
+      <div class="launch-row">
+        <a class="launch-btn" href="hybrid-drivetrain-6d.html" target="_blank" rel="noopener">Launch simulator →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <span class="tool-tag full">Full curriculum</span>
+      <h3>EV Bridge Module — Blue / Orange / Red</h3>
+      <p class="desc">15 missions across three tiers — Blue (B1–B7: vehicle ID, circuit diagnosis, cable safety, electrical-accident response, the BMS Trust Trap, routine inspection, mechanical wear), Orange (L5–L8: de-energized work, battery R&amp;I, LOTO, fluid service), and a Red capstone set (battery/motor/inverter diagnosis plus Cross-System Triangulation) — with AZIZ mentor guidance and an explicit sense-coverage disclosure per mission.</p>
+      <div class="covers"><b>Trains:</b> the identify → verify → act discipline that every later HV competency builds on.</div>
+      <div class="launch-row">
+        <a class="launch-btn" href="SMK_Bridge-module_Intensify_ver2.html" target="_blank" rel="noopener">Launch simulator →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <span class="tool-tag full">Full curriculum</span>
+      <h3>EV Diagnostic Bay — Quest Simulator</h3>
+      <p class="desc">Bronze → Silver → Gold mission progression with sequencing, meter-reading, matching, branching, and photo-case mechanics, a mastery-streak requirement for safety procedures, and a real-vehicle OJT Final Trial.</p>
+      <div class="covers"><b>Trains:</b> applied diagnostic reasoning across a graduated set of real-shop mission types.</div>
+      <div class="launch-row">
+        <a class="launch-btn" href="ev-diagnostic-bay.html" target="_blank" rel="noopener">Launch simulator →</a>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <span class="tool-tag full">Full curriculum</span>
+      <h3>e-Mobility Digital Twin — Meter &amp; X-ray Diagnosis</h3>
+      <p class="desc">A physics-modeled EV component simulator: read live gauge output driven by an actual vehicle-dynamics / drivetrain / battery-power / thermal model, then decide — continue, e-stop, rework, or monitor — across 6 scenarios (normal operation, insulation breakdown, torque out of spec, thermal anomaly, unstable sensor signal, interlock released). Includes an interactive X-ray 3D component viewer (motor, battery) with exploded/transparent views.</p>
+      <div class="covers"><b>Trains:</b> reading real instrument output against physical limits and choosing the correct response under time pressure — with a live accuracy score.</div>
+      <div class="launch-row">
+        <a class="launch-btn" href="e-Mobility_Digital_Twin_Simulator_6D.html" target="_blank" rel="noopener">Launch simulator →</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--navy);display:inline-block;padding:5px 12px;border-radius:999px;margin:22px 0 10px;">Manufacturing &amp; Automation Track</div>
+  <div class="suite-grid" style="margin-bottom:34px;">
+
+    <div class="tool-card">
+      <span class="tool-tag full">Full curriculum</span>
+      <h3>ADM Jizzakh — EV Line 6D Digital Twin</h3>
+      <p class="desc">Robot predictive-maintenance training across a 5-cell EV assembly line — BIW welding, HV battery-pack assembly, paint/e-coat, motor-battery marriage, and EOL quality — built on a 6th "Prognostics" dimension layered onto the standard 5D digital-twin model. 7 modules (~24.5 hrs) ending in a Cross-Station Predictive-Miss Cascade capstone.</p>
+      <div class="covers"><b>Trains:</b> reading sensor-trend drift on robotic manufacturing cells to catch a coming failure before it happens — the line-side counterpart to vehicle predictive maintenance.</div>
+      <div class="launch-row">
+        <a class="launch-btn" href="ADM_Jizzakh_EV_6D_Digital_Twin.html" target="_blank" rel="noopener">Launch simulator →</a>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="section-title" id="instructor-script" style="scroll-margin-top:20px;">Instructor's Guidance — 14-Day Evaluation Script</div>
+  <div class="script-panel" style="border:1.5px solid var(--teal);">
+
+    <div class="day-block">
+      <div class="day-head"><span class="day-badge">Day 1</span><span class="day-title">Kickoff &amp; Orientation</span></div>
+      <p class="day-goal">Goal: get every learner comfortable navigating all four tools before any graded work begins.</p>
+      <div class="say"><b>SAY:</b> "Over the next two weeks you'll work across four linked simulators. None of them require an account or install — bookmark this page, and you can return to any of them at any point in the trial."</div>
+      <div class="walk"><b>Walkthrough:</b> Open the Hybrid Drivetrain 6D Digital Twin together first — cycle through all three architectures as a group so everyone can read the four live readouts without prompting. Then open the EV Bridge Module and show the Blue tier tab structure.</div>
+      <div class="say"><b>CLOSE:</b> "By tomorrow, everyone should have opened all four tools at least once. We start graded work in the Bridge Module on Day 2."</div>
+    </div>
+
+    <div class="day-block">
+      <div class="day-head"><span class="day-badge">Days 2–4</span><span class="day-title">Blue Tier — Identification &amp; Verification</span></div>
+      <p class="day-goal">Goal: build the identify-before-acting habit across B1–B7 in the EV Bridge Module.</p>
+      <div class="say"><b>SAY:</b> "Every lesson this week asks the same underlying question: what do you actually know, versus what are you assuming? Evidence first, judgment second."</div>
+      <div class="walk"><b>Walkthrough:</b> Run one Blue-tier lesson together each day (B1 vehicle intake, B2 headlight circuit, B3 cable routing, or the B4 electrical-accident-response scenario), then have learners complete the remaining lessons individually. Note each mission's "Sense covered" badge out loud — it tells you exactly what this simulator does and doesn't substitute for.</div>
+      <div class="say"><b>CLOSE:</b> "Log your Blue-tier results. We move to hands-on HV procedure in Orange next."</div>
+    </div>
+
+    <div class="day-block">
+      <div class="day-head"><span class="day-badge">Days 5–8</span><span class="day-title">Orange Tier &amp; Diagnostic Bay Bronze/Silver</span></div>
+      <p class="day-goal">Goal: apply de-energization, battery R&amp;I, LOTO, and fluid-spec discipline — then transfer that judgment into the Diagnostic Bay's mission format.</p>
+      <div class="say"><b>SAY:</b> "LOTO has no partial credit in this simulator, on purpose. Four out of five steps in the right order is not a pass — that mirrors the real consequence of getting this wrong."</div>
+      <div class="walk"><b>Walkthrough:</b> Complete L5–L8 in the Bridge Module. In parallel, open the EV Diagnostic Bay and clear the Bronze missions as a group, then let learners work through Silver independently, watching the mistake counter rather than just pass/fail.</div>
+      <div class="say"><b>CLOSE:</b> "Everyone should be at Silver rank or higher in the Diagnostic Bay by tomorrow's session."</div>
+    </div>
+
+    <div class="day-block">
+      <div class="day-head"><span class="day-badge">Days 9–12</span><span class="day-title">Red Tier, Gold Missions &amp; Case Files</span></div>
+      <p class="day-goal">Goal: apply every earlier habit to higher-stakes, ambiguous judgment calls.</p>
+      <div class="say"><b>SAY:</b> "Nothing new is being taught this week. You already have every tool you need — this week is about using it under more pressure and less obvious evidence."</div>
+      <div class="walk"><b>Walkthrough:</b> Run the Bridge Module's Battery/Motor/Inverter diagnosis lessons and the Cross-System Triangulation capstone. In the Diagnostic Bay, work through the Gold-tier Case Files as small-group exercises, discussing disagreements before submitting an answer.</div>
+      <div class="say"><b>CLOSE:</b> "Bring your full results log to Day 13 — we review the whole trial together."</div>
+    </div>
+
+    <div class="day-block">
+      <div class="day-head"><span class="day-badge">Day 13</span><span class="day-title">Review &amp; Feedback</span></div>
+      <p class="day-goal">Goal: consolidate what was learned and surface any gaps or friction with the tools themselves.</p>
+      <div class="say"><b>SAY:</b> "Today isn't about finishing content — it's about telling us, honestly, where this suite helped and where it didn't."</div>
+      <div class="walk"><b>Walkthrough:</b> Have each learner walk back through their Journal / results log across all four tools and name one judgment habit that changed since Day 1. Collect instructor-side notes on any content, translation, or usability issues for IEG.</div>
+    </div>
+
+    <div class="day-block">
+      <div class="day-head"><span class="day-badge">Day 14</span><span class="day-title">Decision Day</span></div>
+      <p class="day-goal">Goal: close the evaluation and decide on next steps.</p>
+      <div class="say"><b>SAY:</b> "Fourteen days ago none of you had touched this suite. Today's conversation is simple: does this belong in your program going forward, and what would need to change first?"</div>
+      <div class="walk"><b>Follow-up:</b> Send consolidated feedback and any renewal or licensing questions to your IEG representative.</div>
+    </div>
+
+  </div>
+
+  <div class="section-title" id="roadmap">Roadmap — Subscription Tiers</div>
+  <p style="font-size:12.5px;color:var(--muted);margin:0 0 16px;max-width:760px;">
+    Past this 14-day evaluation, access is organized into two tracks — vehicle-side service &amp; diagnostics, and line-side manufacturing automation — each with staged tiers. Note: this is a roadmap of what tiers will include, not a live billing system; "Request Access" sends an interest email to your IEG representative rather than starting an immediate charge.
+  </p>
+  <div class="track-row">
+
+    <div class="track-col">
+      <h3>Service &amp; Diagnostic Track</h3>
+      <p class="track-sub">Hybrid Drivetrain 6D (foundation) · Diagnostic subgroup: EV Bridge Module + EV Diagnostic Bay + e-Mobility Digital Twin</p>
+
+      <div class="tier-card">
+        <div class="tier-head"><span class="tier-name">Tier 1 — Foundation</span><span class="tier-badge">Entry</span></div>
+        <p class="tier-includes">Hybrid Drivetrain 6D Digital Twin + EV Bridge Module Blue tier (B1–B7). ICE-technician upskilling entry point — identification and diagnostic-judgment habits.</p>
+        <a class="tier-cta" href="mailto:kellycho824@ieg.kr?subject=IEG%20EV%20Line%20Suite%20—%20Tier%201%20Foundation%20interest&body=We'd%20like%20to%20discuss%20Tier%201%20(Foundation)%20access%20after%20our%20evaluation.">Request Access</a>
+      </div>
+
+      <div class="tier-card">
+        <div class="tier-head"><span class="tier-name">Tier 2 — Bridge Certified</span><span class="tier-badge">Core</span></div>
+        <p class="tier-includes">Adds EV Bridge Module Orange/Red (L5–L8, battery/motor/inverter diagnosis, Capstone), the full EV Diagnostic Bay (Bronze→Gold + OJT Final Trial), and the e-Mobility Digital Twin meter/X-ray diagnosis scenarios.</p>
+        <a class="tier-cta" href="mailto:kellycho824@ieg.kr?subject=IEG%20EV%20Line%20Suite%20—%20Tier%202%20Bridge%20Certified%20interest&body=We'd%20like%20to%20discuss%20Tier%202%20(Bridge%20Certified)%20access%20after%20our%20evaluation.">Request Access</a>
+      </div>
+
+      <div class="tier-card">
+        <div class="tier-head"><span class="tier-name">Tier 3 — Institutional</span><span class="tier-badge">Full</span></div>
+        <p class="tier-includes">Everything in Tier 2, plus attendance/progress tracking (Google Sheets integration), the Certification &amp; Assessment Framework, and multi-cohort licensing for your center.</p>
+        <a class="tier-cta" href="mailto:kellycho824@ieg.kr?subject=IEG%20EV%20Line%20Suite%20—%20Tier%203%20Institutional%20interest&body=We'd%20like%20to%20discuss%20Tier%203%20(Institutional)%20access%20after%20our%20evaluation.">Request Access</a>
+      </div>
+    </div>
+
+    <div class="track-col">
+      <h3>Manufacturing &amp; Automation Track</h3>
+      <p class="track-sub">ADM Jizzakh — EV Line 6D Digital Twin</p>
+
+      <div class="tier-card">
+        <div class="tier-head"><span class="tier-name">Line Predictive Maintenance</span><span class="tier-badge">Single tier</span></div>
+        <p class="tier-includes">Full ADM Jizzakh 6D program: 7 modules across BIW, HV battery assembly, paint, marriage, and quality cells, plus the Cross-Station Predictive-Miss Cascade capstone (~24.5 hrs).</p>
+        <a class="tier-cta" href="mailto:kellycho824@ieg.kr?subject=IEG%20EV%20Line%20Suite%20—%20Manufacturing%20Track%20interest&body=We'd%20like%20to%20discuss%20the%20Manufacturing%20%26%20Automation%20Track%20after%20our%20evaluation.">Request Access</a>
+      </div>
+
+      <div class="tier-card current">
+        <div class="tier-head"><span class="tier-name">More cells / lines — planned</span><span class="tier-badge">Coming</span></div>
+        <p class="tier-includes">Additional station types and non-EV adaptations (this program already documents how Station 2 maps to any critical fastening/marriage cell) are being scoped for future modules.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footnote">
+    This suite trains brand-agnostic HV judgment and hybrid-drivetrain data literacy. It is not endorsed by or affiliated with any OEM, and does not contain vehicle-specific technical data for any specific platform. Every credential issued through this suite is an IEG credential. The 14-day evaluation window locks access to this suite after its expiry date, checked against your device's clock — this is client-side, not a secured backend, so treat it as a strong deterrent rather than absolute protection. For licensing, full deployment, or questions about this evaluation, contact your IEG representative.
+  </div>
+
+</div>
+
+<script>
+  const TRIAL_EXPIRES = new Date("2026-09-14T23:59:59");
+  function renderBanner(){
+    const banner = document.getElementById('trial-banner');
+    const msLeft = TRIAL_EXPIRES - new Date();
+    const daysLeft = Math.max(0, Math.ceil(msLeft / 86400000));
+    banner.textContent = daysLeft > 0
+      ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left · trial locks on ${TRIAL_EXPIRES.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`
+      : 'Evaluation window has closed.';
+    banner.classList.add('show');
+  }
+  renderBanner();
+</script>
+</body>
+</html>
