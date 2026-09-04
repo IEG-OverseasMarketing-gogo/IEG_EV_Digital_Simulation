@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14-Day Trial Facilitator Script — IEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --graphite:#3f454b; --panel:#4a5158; --panel-light:#545c64; --line:#646d75;
+  --steel:#6d9bb8; --steel-dim:#4a6c80; --amber:#e8a33d; --alert:#c2564b;
+  --success:#6fa77a; --text:#e9e6dd; --text-dim:#c3c9cd;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--graphite);color:var(--text);font-family:'IBM Plex Sans',sans-serif;line-height:1.65;}
+.wrap{max-width:820px;margin:0 auto;padding:30px 22px 70px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);}
+.topbar a{color:var(--steel);text-decoration:none;font-size:13px;}
+.brand{font-size:13px;color:var(--text-dim);}
+.brand b{color:var(--steel);}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:34px;border-bottom:2px solid var(--amber);padding-bottom:14px;margin-bottom:22px;}
+h2{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:24px;margin-top:34px;color:var(--text);}
+h3{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:19px;color:var(--steel);}
+p{font-size:14.5px;color:var(--text-dim);}
+strong{color:var(--text);}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;}
+th{background:var(--panel);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+td{background:var(--panel-light);color:var(--text-dim);}
+code{background:var(--panel);color:var(--amber);padding:1px 5px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+pre{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;overflow-x:auto;}
+pre code{background:none;color:var(--text-dim);}
+blockquote{border-left:3px solid var(--amber);margin:0;padding:4px 0 4px 16px;color:var(--text-dim);}
+hr{border:none;border-top:1px solid var(--line);margin:30px 0;}
+li{font-size:14.5px;color:var(--text-dim);margin-bottom:4px;}
+</style></head><body>
+<div class="topbar"><div class="brand"><b>IEG</b> Curriculum Package</div><a href="index.html">← Back to hub</a></div>
+<div class="wrap"><h1>14-Day Trial Facilitator Script — Managing the BluWorkz Pilot</h1>
+<p><strong>Who this is for:</strong> Whoever on the IEG side owns the relationship during the trial (you), guiding whoever on the BluWorkz side actually runs it with students (their training team, not necessarily Peter directly after kickoff).
+<strong>Distinct from:</strong> <code>instructor-guide.md</code>, which teaches the AMR/WMS <em>content</em>. This document manages the <em>trial itself</em> — checkpoints, what to say, what data to pull, and how it closes.
+<strong>Goal by Day 14:</strong> A specific yes/no from Peter on formalizing the partnership, backed by real usage data from the LMS dashboard — not a vague "it went well."</p>
+<hr />
+<h2>Day 0 — Kickoff call (30 min)</h2>
+<p><strong>Attendees:</strong> You, Peter (or whoever he delegates), the BluWorkz-side trial instructor.</p>
+<p><strong>Script — opening:</strong></p>
+<blockquote>
+<p>"This trial has one job: give you real data on whether this fits your students, not a sales demo dressed up as a pilot. We'll check in three times over two weeks, and at the end you'll have actual usage numbers, not just our opinion."</p>
+</blockquote>
+<p><strong>Cover in this call:</strong>
+- Hand over trial credentials (<code>bluworkz</code> / <code>IEGtrial2026!</code>) and the hub URL
+- Confirm who the BluWorkz-side trial instructor is — get their direct contact, not just Peter's
+- Agree on cohort size (recommend 8–15 students for a meaningful but manageable first run)
+- Walk through the LMS dashboard live for 5 minutes so the instructor isn't discovering it alone on Day 1
+- Set the three check-in dates now (see below) — don't leave them to be scheduled later</p>
+<p><strong>Before you hang up, confirm out loud:</strong> <em>"So we'll talk again on [Day 4], [Day 7], and [Day 14] — does that work with your schedule?"</em> Get a yes before ending the call.</p>
+<hr />
+<h2>Days 1–3 — Self-guided start, no check-in</h2>
+<p>Let them run it without you hovering. Your only action: on Day 3, open the LMS dashboard yourself and note whether any stations have logged in at all. If zero activity by end of Day 3, send a short nudge — not a formal check-in:</p>
+<blockquote>
+<p>"No pressure — just flagging the trial clock is running. Let us know if anything's blocking your team from getting started, technical or otherwise."</p>
+</blockquote>
+<hr />
+<h2>Day 4 — First check-in (15 min call or async message)</h2>
+<p><strong>Purpose:</strong> Catch problems early, not evaluate outcomes yet.</p>
+<p><strong>Script:</strong></p>
+<blockquote>
+<p>"Quick pulse check, not a full review — how's it going so far? Anything confusing on the student side or the dashboard side?"</p>
+</blockquote>
+<p><strong>What to pull from the LMS dashboard before this call:</strong> stations active, average progress, any module with unusually low completion. If WMS Troubleshooting shows the expected high first-attempt miss rate, mention it proactively — it validates the Instructor Guide's prediction rather than looking like a flaw:</p>
+<blockquote>
+<p>"If your students are struggling on the WMS troubleshooting step, that's expected — it's the highest-difficulty module by design. The Instructor Guide has a 5-minute group walkthrough for exactly that moment."</p>
+</blockquote>
+<hr />
+<h2>Day 7 — Week 1 review call (30 min)</h2>
+<p><strong>Purpose:</strong> First real data conversation. This is where you start building the case for Day 14.</p>
+<p><strong>Data to bring, pulled from the LMS dashboard:</strong>
+- Module completion funnel (how many reached each of the 4 modules)
+- Any class-wide sticking points flagged
+- Rough sense of engagement (are students returning voluntarily, or only doing it when told to)</p>
+<p><strong>Script — ask, don't assert:</strong></p>
+<blockquote>
+<p>"Based on what you're seeing on your end — does this feel like something your students actually engage with, or does it feel like homework they're pushing through?"</p>
+</blockquote>
+<p>Listen for the real answer here. If it's lukewarm, don't argue with it — ask what specifically is falling flat, and note it for the Day 14 conversation rather than trying to talk them out of it.</p>
+<hr />
+<h2>Days 8–13 — Deepen usage, start preparing the close</h2>
+<ul>
+<li>Encourage the BluWorkz instructor to run at least one full Instructor Guide session (all 4 modules in sequence) if they haven't already, ideally with you or a colleague quietly observing via the dashboard (not in the room)</li>
+<li>Around Day 10, pull a fresh export from the LMS dashboard and compare against Day 7 — you want a "before/after" story for Day 14, not just a snapshot</li>
+<li>If any student reached full completion with a passing rubric score, note their name/station — a concrete individual example lands better in the closing call than an aggregate percentage</li>
+</ul>
+<hr />
+<h2>Day 14 — Closing call with Peter (30–40 min)</h2>
+<p><strong>This is the actual ask.</strong> Don't let it drift into a casual "so what did you think" conversation — structure it.</p>
+<p><strong>Script — open with data, not opinion:</strong></p>
+<blockquote>
+<p>"Here's what happened over two weeks: [X] students, [Y]% reached the advanced troubleshooting module, [Z] fully certified at the Orange tier. [One specific example, if you have it]."</p>
+</blockquote>
+<p><strong>Then the direct three-part ask (same structure as the original pitch):</strong>
+1. "Based on this, we'd propose moving from trial to a formal pilot — one full cohort, with real assessment data feeding into your existing training-outcomes reporting."
+2. "On the commercial side, we'd want to talk about how this sits alongside your RFAAS pricing — a bundled or licensed model, whichever fits your structure better."
+3. "Can we get 30 minutes with your training team in the next two weeks to map this against your actual curriculum calendar?"</p>
+<p><strong>If the data was weak or engagement was low:</strong> Don't oversell it. Ask directly what would need to change for it to be worth continuing — a different module order, different cohort, different framing to students — and treat "no, this isn't the right fit" as a legitimate outcome, not something to argue past.</p>
+<hr />
+<h2>Data checklist — what to pull from the LMS dashboard at each checkpoint</h2>
+<table>
+<thead>
+<tr>
+<th>Checkpoint</th>
+<th>Pull this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Day 4</td>
+<td>Stations active, any zero-activity stations</td>
+</tr>
+<tr>
+<td>Day 7</td>
+<td>Module completion funnel, sticking-point flags, engagement impression</td>
+</tr>
+<tr>
+<td>Day 10</td>
+<td>Same as Day 7, compared against Day 7 numbers</td>
+</tr>
+<tr>
+<td>Day 14</td>
+<td>Full funnel, rubric pass rate per module, tier badges issued, 1–2 individual student examples</td>
+</tr>
+</tbody>
+</table>
+<p>Keep every export — this becomes the evidence base for the Day 14 ask, and for any future pitch to a different BluWorkz partner school if this one doesn't convert.</p></div>
+</body></html>

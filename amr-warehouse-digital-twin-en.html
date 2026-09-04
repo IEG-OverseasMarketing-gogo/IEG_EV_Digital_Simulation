@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMR/AGV Warehouse Automation Digital Twin — IEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --graphite:#3f454b;
+    --panel:#4a5158;
+    --panel-light:#545c64;
+    --line:#646d75;
+    --steel:#6d9bb8;
+    --steel-dim:#4a6c80;
+    --amber:#e8a33d;
+    --alert:#c2564b;
+    --success:#6fa77a;
+    --text:#e9e6dd;
+    --text-dim:#9aa6ac;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--graphite);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3,.disp{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 60px;}
+
+  /* top bar */
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 20px;border-bottom:1px solid var(--line);
+    max-width:920px;margin:0 auto;
+  }
+  .brand{font-size:13px;color:var(--text-dim);}
+  .brand b{color:var(--steel);}
+  .tier{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-dim);}
+  .tier .dot{width:9px;height:9px;border-radius:50%;background:var(--line);}
+  .tier .dot.blue{background:var(--steel);}
+  .tier .dot.orange{background:var(--amber);}
+  .tier .dot.red{background:var(--alert);}
+
+  /* hero */
+  .hero{padding:36px 0 8px;}
+  .hero h1{font-size:42px;margin:0 0 6px;color:var(--text);}
+  .hero h1 span{color:var(--amber);}
+  .hero p{max-width:520px;color:var(--text-dim);font-size:15px;margin:0 0 26px;}
+
+  .floor{
+    position:relative;background:var(--panel);border:1px solid var(--line);
+    border-radius:4px;padding:18px;overflow:hidden;
+  }
+  svg{display:block;width:100%;height:auto;}
+  .zone-label{fill:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;}
+  .zone-rect{fill:var(--panel-light);stroke:var(--line);stroke-width:1;}
+  .rack{fill:none;stroke:var(--line);stroke-width:1;}
+  .amr{fill:var(--amber);}
+  .path-line{fill:none;stroke:var(--steel-dim);stroke-width:1.5;stroke-dasharray:3 3;}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;margin-top:34px;border-bottom:1px solid var(--line);}
+  .tab{
+    flex:1;background:none;border:none;color:var(--text-dim);
+    font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;
+    padding:12px 6px;cursor:pointer;border-bottom:2px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  .tab.active{color:var(--text);border-bottom-color:var(--amber);}
+  .tab:hover{color:var(--text);}
+
+  .panel{display:none;padding-top:26px;animation:fade .25s ease;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  .panel h2{font-size:26px;margin:0 0 4px;}
+  .panel .sub{color:var(--text-dim);font-size:13px;margin-bottom:20px;}
+
+  /* module 1: principle */
+  .zone-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;}
+  .zone-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    padding:12px;cursor:pointer;transition:border-color .15s;
+  }
+  .zone-card:hover, .zone-card.open{border-color:var(--steel);}
+  .zone-card .num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);}
+  .zone-card h3{font-size:17px;margin:4px 0;}
+  .zone-card .detail{font-size:12.5px;color:var(--text-dim);display:none;margin-top:6px;}
+  .zone-card.open .detail{display:block;}
+
+  .compare{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .compare .box{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;}
+  .compare .box b{color:var(--amber);font-size:13px;}
+  .compare .box p{font-size:13px;color:var(--text-dim);margin:6px 0 0;}
+
+  /* module 2: dispatch */
+  .dispatch-wrap{display:flex;gap:20px;flex-wrap:wrap;}
+  .dispatch-map{flex:1 1 320px;}
+  .dispatch-log{
+    flex:1 1 220px;background:var(--panel);border:1px solid var(--line);
+    border-radius:4px;padding:14px;font-family:'IBM Plex Mono',monospace;
+    font-size:12px;color:var(--text-dim);min-height:180px;
+  }
+  .dispatch-log .entry{margin-bottom:6px;}
+  .dispatch-log .entry.ok{color:var(--success);}
+  .rack-btn{cursor:pointer;}
+  .rack-btn rect{transition:fill .15s;}
+  .rack-btn:hover rect{fill:var(--steel-dim);}
+
+  /* module 3: scenario */
+  .scenario-box{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px;}
+  .scenario-box p{font-size:14px;}
+  .choices{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .choice-btn{
+    text-align:left;background:var(--panel-light);border:1px solid var(--line);
+    color:var(--text);border-radius:4px;padding:10px 12px;font-size:13.5px;
+    cursor:pointer;font-family:inherit;
+  }
+  .choice-btn:hover{border-color:var(--steel);}
+  .feedback{margin-top:14px;padding:12px;border-radius:4px;font-size:13.5px;display:none;}
+  .feedback.show{display:block;}
+  .feedback.good{background:rgba(111,167,122,.12);border:1px solid var(--success);}
+  .feedback.bad{background:rgba(194,86,75,.12);border:1px solid var(--alert);}
+
+  /* module 4: troubleshoot */
+  .fault-banner{
+    background:rgba(194,86,75,.12);border:1px solid var(--alert);border-radius:4px;
+    padding:12px 14px;font-size:13.5px;margin-bottom:16px;
+  }
+  .fault-banner .mono{color:var(--alert);}
+  .diag-steps{display:flex;flex-direction:column;gap:10px;}
+  .diag-step{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px;}
+  .diag-step.locked{opacity:.4;pointer-events:none;}
+  .diag-step .q{font-size:13.5px;margin-bottom:8px;}
+  .diag-step .opts{display:flex;gap:8px;flex-wrap:wrap;}
+  .diag-step button{
+    background:var(--panel-light);border:1px solid var(--line);color:var(--text);
+    padding:7px 11px;border-radius:3px;font-size:12.5px;cursor:pointer;font-family:inherit;
+  }
+  .diag-step button.picked-good{border-color:var(--success);color:var(--success);}
+  .diag-step button.picked-bad{border-color:var(--alert);color:var(--alert);}
+  .resolve{margin-top:6px;font-size:12.5px;color:var(--text-dim);display:none;}
+  .resolve.show{display:block;}
+
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;}
+  .ladder{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);}
+  .ladder .seg{padding:5px 10px;border-radius:3px;border:1px solid var(--line);}
+  .ladder .seg.blue{border-color:var(--steel);color:var(--steel);}
+  .ladder .seg.orange{border-color:var(--amber);color:var(--amber);}
+  .ladder .seg.red{border-color:var(--alert);color:var(--alert);}
+  .ladder .arrow{color:var(--text-dim);}
+  footer .credit{font-size:11.5px;color:var(--text-dim);}
+
+  @media(max-width:640px){
+    .hero h1{font-size:30px;}
+    .zone-grid{grid-template-columns:1fr 1fr;}
+    .compare{grid-template-columns:1fr;}
+    .tabs{flex-wrap:wrap;}
+    .tab{flex:1 1 45%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><b>IEG</b> Digital Twin — Prototype</div>
+  <div class="tier">
+    <span class="dot blue"></span>BLUE <span class="dot orange"></span>ORANGE <span class="dot red"></span>RED
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>From forklift to <span>automated systems</span></h1>
+    <p>AMR/AGV operation & maintenance, conveyor & AS/RS systems, WMS-integrated troubleshooting — a career-ladder training platform for automated warehouses</p>
+    <div style="display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:6px 12px;margin-bottom:22px;font-size:12.5px;color:var(--text-dim);">
+      <span class="mono" style="color:var(--amber);">i-MOBA</span> — IEG's in-house AMR, KC-certified
+    </div>
+
+    <div class="floor">
+      <svg viewBox="0 0 860 220" xmlns="http://www.w3.org/2000/svg">
+        <rect class="zone-rect" x="10" y="10" width="150" height="200" rx="2"/>
+        <text class="zone-label" x="20" y="26">INBOUND DOCK</text>
+        <rect class="zone-rect" x="180" y="10" width="280" height="200" rx="2"/>
+        <text class="zone-label" x="190" y="26">STORAGE / AS-RS</text>
+        <g class="rack">
+          <rect x="200" y="45" width="50" height="150"/>
+          <rect x="270" y="45" width="50" height="150"/>
+          <rect x="340" y="45" width="50" height="150"/>
+          <rect x="410" y="45" width="30" height="150"/>
+        </g>
+        <rect class="zone-rect" x="480" y="10" width="180" height="200" rx="2"/>
+        <text class="zone-label" x="490" y="26">PICKING / BUFFER</text>
+        <rect class="zone-rect" x="680" y="10" width="170" height="200" rx="2"/>
+        <text class="zone-label" x="690" y="26">OUTBOUND DOCK</text>
+
+        <path class="path-line" d="M85,190 L85,60 L560,60 L560,190 L760,190"/>
+        <rect class="amr" x="0" y="0" width="14" height="14" rx="2">
+          <animateMotion dur="9s" repeatCount="indefinite"
+            path="M85,190 L85,60 L560,60 L560,190 L760,190 L760,190"/>
+        </rect>
+      </svg>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="t1">Principle</button>
+    <button class="tab" data-tab="t2">Equipment Operation</button>
+    <button class="tab" data-tab="t3">Hands-On Scenario</button>
+    <button class="tab" data-tab="t4">WMS Troubleshooting</button>
+  </div>
+
+  <!-- MODULE 1: PRINCIPLE -->
+  <div class="panel active" id="t1">
+    <h2>How an automated warehouse is structured</h2>
+    <div class="sub">Click a zone card to see what each area does</div>
+    <div class="zone-grid" id="zoneGrid">
+      <div class="zone-card" data-i="1"><div class="num">01</div><h3>Inbound</h3><div class="detail">After receiving inspection, AMRs carry pallets into storage — the starting point of the flow.</div></div>
+      <div class="zone-card" data-i="2"><div class="num">02</div><h3>Storage / AS-RS</h3><div class="detail">Vertical automated storage. Rack height and slot positions are managed in real time by the WMS.</div></div>
+      <div class="zone-card" data-i="3"><div class="num">03</div><h3>Picking / Buffer</h3><div class="detail">AMRs bring items to the picking zone, where a worker does final verification before packing.</div></div>
+      <div class="zone-card" data-i="4"><div class="num">04</div><h3>Outbound</h3><div class="detail">After the outbound scan, items move via conveyor to the loading dock.</div></div>
+    </div>
+
+    <div class="compare">
+      <div class="box"><b>AGV</b><p>Follows a fixed path (magnetic tape/rail). Predictable, but inflexible to layout changes.</p></div>
+      <div class="box"><b>AMR</b><p>Sensor- and map-based autonomous navigation. Avoids obstacles and adapts to layout changes.</p></div>
+    </div>
+
+    <div class="sub" style="margin-top:26px;">The i-MOBA lineup — IEG's in-house AMR · from the IEG general catalog</div>
+    <div class="compare" style="grid-template-columns:repeat(3,1fr);align-items:start;">
+      <div class="box">
+        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAE4AOgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDrKKKKokKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooptADqKKKACiiigAooooAKKKKACim06gAoptOoAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi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8ixoWdlVAOSeBXCk5dj6k1mDU9R1F995Kzeg6AfQDir8f3aAJxS0wGnVQC0UlFAElFOptBIUlLSUFBRRRQAU2nU2gApDS0lADaif7tSmmGgDMuxOG3QsyEdCGway9T1HWbuxNjc3Mk1vuBxIoY8dOcZronQGq0lur9VoA4/TNY8RaBL/AKFqtybcdLeZvNj+mDyPwNdxpHxQBUJq9j5b5A8y3zg++D/jWZLpyP8Aw1mT6MD0WpsB6zpfiHSdYYLZXkbSEE+Ucq+B1ODWrmvENKe68OamuoWsUbSKrLiRSQQevQ13Gn/EixkYJqNnLav3aP8AeJ/iPyoA7ekNYv8Awl/h/wArf/a1tjHTnd+WM1zWr/EMvug0W1Zj0+0TKQPqq9T+NAHa3l7a6favc3tzFBAo5klYKB+ded6z8WYXla08NWbXk54+0SqVjHuF6n8cVz8tle6vKk2p3Mt0QMDzWLAfQdBWlZ6VBbLhIlX6KBRYCg8ep6w6zateSTydeeFH+6o4FaVtp6RLwtXkiAqQJQAyOIBasJxTQKlAqgClFGKdigAooooAmptOooAbSUtFACUtFFACUUtJQA2inU2gBMUwipKSgCLFJipsU3FAEGymmAGrGylxQBSe0V+q1Ul0iKT+GtjZRigDBGhJuzVuLTI4+i1p4oxQBVSACpBHU2KMUAR7KXZT8U7AoAixTxTsUUALRRRQAUUUUAS0UUVJIU2nU01QBRRTqChtFOptACUUtFACUYopaAExRilooAZijFPpKAG0U6igBmKKeaKAG0U6igBop2KKKAG4oxT6KAGYop1FADaKdRQA+iiigkKKM0ZoKCg0UUAFNp2abQSFFGaM0FBRQKdQA2ijFFABRRTsUANpKWnYoAZiin4oxQA3FFOooAbRRRQAUUU7FADMUUGigAooooAfRS0YoJGUU7FLigoSilxSYoAbRTsUYoJG0U7FGKAGinUuKMUAJRin4ooAZRT6KVgGUtOopgNop1FADaSn03FACYoxT6KAGUooxQaAGGkNPNMNBQ2inUUASUU6igkKKKKAG06iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAbimEVLTDQAw0UGigomooooJCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACmGiigAxRRRQUf//Z" alt="i-MOBA standard type" style="width:100%;border-radius:3px;margin-bottom:8px;background:#3a3f43;">
+        <b>Standard</b>
+        <p>Max load 90kg · max speed 1.35m/s. Optimized for point-to-point pallet and box transport.</p>
+      </div>
+      <div class="box">
+        <img src="data:image/jpeg;base64,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" alt="i-MOBA manipulator type" style="width:100%;border-radius:3px;margin-bottom:8px;background:#3a3f43;">
+        <b>Manipulator type</b>
+        <p>Fitted with an RB5-850 cobot (5kg payload, 927.7mm reach). Automates picking and loading.</p>
+      </div>
+      <div class="box" style="border-color:var(--steel);">
+        <img src="data:image/jpeg;base64,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" alt="i-MOBA conveyor type" style="width:100%;border-radius:3px;margin-bottom:8px;background:#3a3f43;">
+        <b style="color:var(--steel);">Conveyor type ★</b>
+        <p>Conveyor top module, built for continuous rack-to-picking transfer — <span style="color:var(--text);">the recommended pairing, smallest skill jump from forklift work</span>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 2: DISPATCH -->
+  <div class="panel" id="t2">
+    <h2>i-MOBA dispatch exercise</h2>
+    <div class="sub">Click a rack to send an i-MOBA (conveyor type) to the picking zone</div>
+    <div class="dispatch-wrap">
+      <div class="dispatch-map">
+        <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+          <rect class="zone-rect" x="4" y="4" width="312" height="192" rx="2"/>
+          <g class="rack-btn" data-rack="A" onclick="dispatch('A',60,50)">
+            <rect x="30" y="30" width="40" height="40" fill="var(--panel-light)" stroke="var(--line)"/>
+            <text x="40" y="55" class="zone-label" fill="#9aa6ac">RACK A</text>
+          </g>
+          <g class="rack-btn" data-rack="B" onclick="dispatch('B',150,50)">
+            <rect x="130" y="30" width="40" height="40" fill="var(--panel-light)" stroke="var(--line)"/>
+            <text x="140" y="55" class="zone-label" fill="#9aa6ac">RACK B</text>
+          </g>
+          <g class="rack-btn" data-rack="C" onclick="dispatch('C',240,50)">
+            <rect x="230" y="30" width="40" height="40" fill="var(--panel-light)" stroke="var(--line)"/>
+            <text x="240" y="55" class="zone-label" fill="#9aa6ac">RACK C</text>
+          </g>
+          <rect x="130" y="140" width="60" height="30" fill="var(--panel-light)" stroke="var(--line)"/>
+          <text x="140" y="159" class="zone-label" fill="#9aa6ac">PICK ZONE</text>
+          <rect id="amrIcon" class="amr" x="150" y="150" width="14" height="14" rx="2" style="transition:x 1s ease, y 1s ease;"/>
+        </svg>
+      </div>
+      <div class="dispatch-log" id="dispatchLog">
+        <div class="entry">SYSTEM READY — i-MOBA #07 standing by, select a rack</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 3: SCENARIO -->
+  <div class="panel" id="t3">
+    <h2>Hands-on scenario — aisle congestion</h2>
+    <div class="sub">A branching problem that tests on-the-floor judgment</div>
+    <div class="scenario-box">
+      <p>Two AMRs have stopped at the entrance to the picking aisle, neither yielding the right of way. The WMS dashboard shows "Path Conflict — Zone 3." How do you respond?</p>
+      <div class="choices">
+        <button class="choice-btn" onclick="scenarioPick(this,false)">Manually push both AMRs out of the way right away</button>
+        <button class="choice-btn" onclick="scenarioPick(this,true)">Reassign priority from the WMS control screen and pause one unit</button>
+        <button class="choice-btn" onclick="scenarioPick(this,false)">Stop the whole AMR fleet and reboot it</button>
+      </div>
+      <div class="feedback" id="scenarioFeedback"></div>
+    </div>
+  </div>
+
+  <!-- MODULE 4: TROUBLESHOOTING -->
+  <div class="panel" id="t4">
+    <h2>WMS-integrated troubleshooting</h2>
+    <div class="sub">Diagnosing an inventory-mismatch alert</div>
+    <div class="fault-banner">
+      <span class="mono">ALERT #4471</span> — Rack B slot position doesn't match the WMS inventory record (physical: 12 / system: 15) · linked to i-MOBA fleet log
+    </div>
+    <div class="diag-steps">
+      <div class="diag-step" id="step1">
+        <div class="q">Step 1 — What do you check first?</div>
+        <div class="opts">
+          <button onclick="diag(1,this,true)">Cross-check recent i-MOBA transfer logs</button>
+          <button onclick="diag(1,this,false)">Restart the WMS server</button>
+        </div>
+        <div class="resolve" id="resolve1"></div>
+      </div>
+      <div class="diag-step locked" id="step2">
+        <div class="q">Step 2 — The logs show a 3-unit discrepancy is due to pending (unconfirmed) transfers. What's your next move?</div>
+        <div class="opts">
+          <button onclick="diag(2,this,true)">Manually confirm the pending transfer, then re-sync inventory</button>
+          <button onclick="diag(2,this,false)">Manually edit the inventory count to match the discrepancy</button>
+        </div>
+        <div class="resolve" id="resolve2"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="ladder">
+      <span class="seg blue">Forklift operation</span><span class="arrow">→</span>
+      <span class="seg orange">AMR/AGV operation & maintenance</span><span class="arrow">→</span>
+      <span class="seg red">WMS integrated control</span>
+    </div>
+    <div class="credit">IEG 6D Digital Twin Framework × i-MOBA AMR Platform — Concept Prototype</div>
+  </footer>
+</div>
+
+<script>
+  // tabs
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // module 1 zone cards
+  document.querySelectorAll('.zone-card').forEach(c=>{
+    c.addEventListener('click',()=>c.classList.toggle('open'));
+  });
+
+  // module 2 dispatch
+  function dispatch(rack,x,y){
+    const icon=document.getElementById('amrIcon');
+    icon.setAttribute('x',x-7);
+    icon.setAttribute('y',y-7);
+    const log=document.getElementById('dispatchLog');
+    const entry=document.createElement('div');
+    entry.className='entry';
+    entry.textContent='> Dispatching i-MOBA #07 to RACK '+rack;
+    log.appendChild(entry);
+    setTimeout(()=>{
+      icon.setAttribute('x',143);
+      icon.setAttribute('y',153);
+      const ok=document.createElement('div');
+      ok.className='entry ok';
+      ok.textContent='✓ Arrived at picking zone — WMS inventory synced (-1)';
+      log.appendChild(ok);
+      log.scrollTop=log.scrollHeight;
+    },1100);
+    log.scrollTop=log.scrollHeight;
+  }
+
+  // module 3 scenario
+  function scenarioPick(btn,correct){
+    document.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+    const fb=document.getElementById('scenarioFeedback');
+    fb.classList.add('show');
+    if(correct){
+      fb.classList.add('good');
+      fb.textContent='Correct — reassigning priority through the control system is standard procedure. Manual intervention risks tripping collision-detection sensors.';
+    }else{
+      fb.classList.add('bad');
+      fb.textContent='Reconsider — physical intervention or a full fleet stop is not standard procedure. Reassigning priority from WMS control is the correct response.';
+    }
+  }
+
+  // module 4 diagnostics
+  function diag(step,btn,correct){
+    const group=btn.parentElement.querySelectorAll('button');
+    group.forEach(b=>b.disabled=true);
+    btn.classList.add(correct?'picked-good':'picked-bad');
+    const r=document.getElementById('resolve'+step);
+    r.classList.add('show');
+    if(step===1){
+      r.textContent=correct
+        ? '→ Log cross-check confirms 3 transfers are still marked "pending."'
+        : '→ Restarting the server is a stopgap that skips root-cause checks. Log cross-checking comes first.';
+      if(correct){
+        document.getElementById('step2').classList.remove('locked');
+      }
+    }else{
+      r.textContent=correct
+        ? '→ After confirming the transfer, inventory re-syncs to 12. ALERT #4471 cleared.'
+        : '→ Manually editing the count leaves the root cause unresolved and likely to recur. Confirm the transfer instead.';
+    }
+  }
+</script>
+
+</body>
+</html>

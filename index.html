@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IEG × BluWorkz — Warehouse Automation Trial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --graphite:#3f454b; --panel:#4a5158; --panel-light:#545c64; --line:#646d75;
+    --steel:#6d9bb8; --steel-dim:#4a6c80; --amber:#e8a33d; --alert:#c2564b;
+    --success:#6fa77a; --text:#e9e6dd; --text-dim:#c3c9cd;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--graphite);color:var(--text);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  h1,h2,h3{font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.01em;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 60px;}
+
+  /* login gate */
+  #gate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:var(--graphite);padding:20px;
+  }
+  .gate-box{
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:34px;max-width:360px;width:100%;
+  }
+  .gate-box .mono.tag{color:var(--amber);font-size:11px;margin-bottom:10px;display:block;}
+  .gate-box h1{font-size:26px;margin:0 0 6px;}
+  .gate-box p{color:var(--text-dim);font-size:13px;margin:0 0 22px;}
+  .gate-box input{
+    width:100%;background:var(--panel-light);border:1px solid var(--line);color:var(--text);
+    padding:10px 12px;border-radius:3px;margin-bottom:10px;font-family:inherit;font-size:14px;
+  }
+  .gate-box button{
+    width:100%;background:var(--steel-dim);border:1px solid var(--steel);color:var(--text);
+    padding:11px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:16px;
+    font-weight:600;cursor:pointer;margin-top:6px;
+  }
+  .gate-box button:hover{background:var(--steel);}
+  .gate-err{color:var(--alert);font-size:12px;margin-top:8px;display:none;}
+  .gate-err.show{display:block;}
+
+  /* hub */
+  #hub{display:none;}
+  #hub.show{display:block;}
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    padding:16px 20px;border-bottom:1px solid var(--line);max-width:960px;margin:0 auto;
+  }
+  .brand{font-size:13px;color:var(--text-dim);}
+  .brand b{color:var(--steel);}
+  .trial-badge{
+    display:inline-flex;align-items:center;gap:6px;background:rgba(232,163,61,.15);
+    border:1px solid var(--amber);color:var(--amber);padding:5px 11px;border-radius:3px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;
+  }
+  .hero{padding:34px 0 10px;}
+  .hero h1{font-size:36px;margin:0 0 8px;}
+  .hero h1 span{color:var(--amber);}
+  .hero p{max-width:600px;color:var(--text-dim);font-size:14.5px;}
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--steel);
+    margin:34px 0 12px;letter-spacing:.05em;text-transform:uppercase;
+  }
+  .card-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media(max-width:640px){.card-grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:5px;
+    padding:18px;text-decoration:none;color:var(--text);display:block;
+    transition:border-color .15s,transform .1s;
+  }
+  .card:hover{border-color:var(--steel);transform:translateY(-1px);}
+  .card .kicker{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-dim);margin-bottom:6px;}
+  .card h3{font-size:19px;margin:0 0 6px;color:var(--text);}
+  .card p{font-size:12.5px;color:var(--text-dim);margin:0;}
+  .card .arrow{float:right;color:var(--steel);font-size:18px;}
+
+  .qr-box{
+    display:flex;align-items:center;gap:16px;background:var(--panel);
+    border:1px solid var(--line);border-radius:5px;padding:16px 18px;margin-bottom:10px;
+  }
+  .qr-box img{background:#fff;border-radius:3px;padding:6px;flex-shrink:0;}
+  .qr-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:600;margin-bottom:4px;}
+  .qr-sub{font-size:12px;color:var(--text-dim);}
+
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--text-dim);}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-box">
+    <span class="mono tag">IEG × BLUWORKZ</span>
+    <h1>Warehouse Automation Trial</h1>
+    <p>Enter your trial credentials to access the AMR/WMS demo package.</p>
+    <input type="text" id="user" placeholder="Trial ID">
+    <input type="password" id="pass" placeholder="Password">
+    <button onclick="tryLogin()">Enter Trial</button>
+    <div class="gate-err" id="gateErr">Incorrect ID or password — please check with your IEG contact.</div>
+  </div>
+</div>
+
+<div id="hub">
+  <div class="topbar">
+    <div class="brand"><b>IEG</b> × BluWorkz Trial</div>
+    <span class="trial-badge" id="trialBadge">14-DAY TRIAL</span>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <h1>From forklift to <span>automated systems</span></h1>
+      <p>A complete preview of the proposed career-ladder training package — working simulator, instructor LMS, and full curriculum documentation, built around IEG's i-MOBA AMR line.</p>
+    </div>
+
+    <div class="section-label">Interactive Demos</div>
+    <div class="card-grid">
+      <a class="card" href="amr-warehouse-digital-twin-en.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">STUDENT-FACING</div>
+        <h3>AMR/WMS Digital Twin</h3>
+        <p>4-module working prototype — principle learning, AMR dispatch, hands-on scenario, WMS troubleshooting.</p>
+      </a>
+      <a class="card" href="lms-instructor-dashboard-en.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">INSTRUCTOR-FACING</div>
+        <h3>LMS Instructor Dashboard</h3>
+        <p>Live 20-station classroom monitor with progress tracking and class-wide sticking-point alerts.</p>
+      </a>
+    </div>
+
+    <div class="section-label">Curriculum Documentation</div>
+    <div class="card-grid">
+      <a class="card" href="competency-mapping.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">FRAMEWORK ALIGNMENT</div>
+        <h3>MSSC CLA/CLT Competency Mapping</h3>
+        <p>Every module mapped to a named MSSC Certified Logistics work activity.</p>
+      </a>
+      <a class="card" href="instructor-guide.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">FOR INSTRUCTORS</div>
+        <h3>Instructor Guide</h3>
+        <p>Session-by-session teaching notes, timing, and common student errors.</p>
+      </a>
+      <a class="card" href="reference-guide.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">FOR STUDENTS</div>
+        <h3>Reference Guide</h3>
+        <p>AMR/WMS theory and i-MOBA spec sheet, written at CLA-recommended reading level.</p>
+      </a>
+      <a class="card" href="assessment-rubric.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">INSTRUCTOR-ONLY</div>
+        <h3>Assessment Rubric</h3>
+        <p>Pass/fail cut scores per module, mapped to MSSC work activities, plus tier-badge rules.</p>
+      </a>
+    </div>
+
+    <div class="section-label">Trial Management</div>
+    <div class="card-grid">
+      <a class="card" href="trial-facilitator-script.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">FOR THE IEG TRIAL OWNER</div>
+        <h3>14-Day Trial Facilitator Script</h3>
+        <p>Day-by-day checkpoints, check-in scripts, and the Day-14 closing call structure.</p>
+      </a>
+      <a class="card" href="us-market-alignment.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">CREDIBILITY CHECK</div>
+        <h3>U.S. Market Alignment</h3>
+        <p>Infographic: honest coverage vs. currently-running MSSC CLT and CT-SCA programs.</p>
+      </a>
+      <a class="card" href="feedback.html" target="_blank">
+        <span class="arrow">↗</span>
+        <div class="kicker">FOR BLUWORKZ INSTRUCTORS</div>
+        <h3>Trial Feedback</h3>
+        <p>Quick-note form — sends straight to your IEG contact as you go, no login needed.</p>
+      </a>
+    </div>
+
+    <div class="section-label">Quick Access</div>
+    <div class="qr-box" id="qrBox">
+      <img id="qrImg" alt="QR code linking to this trial hub" width="120" height="120">
+      <div>
+        <div class="qr-title">Scan to reopen this hub</div>
+        <div class="qr-sub">Same login required — handy for pulling this up on a phone during a meeting.</div>
+      </div>
+    </div>
+
+    <footer>IEG 6D Digital Twin Framework × i-MOBA AMR Platform — Trial package prepared for BluWorkz evaluation. Contact: kellycho824@ieg.kr</footer>
+  </div>
+</div>
+
+<script>
+  const VALID_USER = 'bluworkz';
+  const VALID_PASS = 'IEGtrial2026!';
+  const TRIAL_DAYS = 14;
+
+  function tryLogin(){
+    const u = document.getElementById('user').value.trim().toLowerCase();
+    const p = document.getElementById('pass').value;
+    if(u === VALID_USER && p === VALID_PASS){
+      let start = localStorage.getItem('iegTrialStart');
+      if(!start){
+        start = Date.now().toString();
+        localStorage.setItem('iegTrialStart', start);
+      }
+      showHub(parseInt(start));
+    } else {
+      document.getElementById('gateErr').classList.add('show');
+    }
+  }
+
+  function showHub(startMs){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('hub').classList.add('show');
+    const elapsed = Math.floor((Date.now() - startMs) / (1000*60*60*24));
+    const remaining = Math.max(0, TRIAL_DAYS - elapsed);
+    document.getElementById('trialBadge').textContent =
+      remaining > 0 ? `${remaining} DAY${remaining===1?'':'S'} LEFT IN TRIAL` : 'TRIAL PERIOD ENDED';
+
+    // QR code for the current live URL (works once deployed to Netlify/GitHub Pages/etc.)
+    const currentUrl = window.location.href.split('#')[0];
+    const qrImg = document.getElementById('qrImg');
+    if(qrImg){
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + encodeURIComponent(currentUrl);
+    }
+  }
+
+  // auto-resume session on this device
+  const existingStart = localStorage.getItem('iegTrialStart');
+  if(existingStart){
+    // still require credentials for cross-device / shared-link safety,
+    // but pre-fill nothing — this just controls the badge countdown once logged in
+  }
+
+  document.getElementById('pass').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') tryLogin();
+  });
+</script>
+
+</body>
+</html>

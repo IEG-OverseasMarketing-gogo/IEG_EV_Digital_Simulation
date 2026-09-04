@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U.S. Market Alignment — IEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --graphite:#3f454b; --panel:#4a5158; --panel-light:#545c64; --line:#646d75;
+    --steel:#6d9bb8; --steel-dim:#4a6c80; --amber:#e8a33d; --alert:#c2564b;
+    --success:#6fa77a; --text:#e9e6dd; --text-dim:#c3c9cd;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--graphite);color:var(--text);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  h1,h2,h3{font-family:'Barlow Condensed',sans-serif;font-weight:600;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);}
+  .topbar a{color:var(--steel);text-decoration:none;font-size:13px;}
+  .brand{font-size:13px;color:var(--text-dim);}
+  .brand b{color:var(--steel);}
+  .wrap{max-width:880px;margin:0 auto;padding:30px 20px 60px;}
+
+  .hero h1{font-size:32px;margin:0 0 6px;}
+  .hero p{color:var(--text-dim);font-size:14px;max-width:560px;margin:0 0 30px;}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;}
+  .panel .kicker{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--steel);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;}
+  .panel h2{font-size:22px;margin:0 0 4px;}
+  .panel .big-stat{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:700;color:var(--amber);line-height:1;margin:14px 0 4px;}
+  .panel .stat-sub{font-size:12px;color:var(--text-dim);margin-bottom:16px;}
+
+  /* CLT segmented bar */
+  .seg-bar{display:flex;gap:3px;margin-bottom:10px;}
+  .seg{flex:1;height:22px;border-radius:2px;}
+  .seg.on{background:var(--success);}
+  .seg.off{background:var(--panel-light);border:1px solid var(--line);}
+  .seg-legend{font-size:11px;color:var(--text-dim);}
+  .gap-list{margin-top:14px;font-size:12px;color:var(--text-dim);}
+  .gap-list b{color:var(--alert);display:block;font-size:11px;margin-bottom:4px;}
+
+  /* CT-SCA grid */
+  .cert-group{margin-top:14px;}
+  .cert-group .label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-dim);margin-bottom:5px;}
+  .cell-row{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+  .cell{
+    aspect-ratio:1;border-radius:2px;display:flex;align-items:center;justify-content:center;
+    font-size:8px;text-align:center;color:var(--graphite);font-weight:600;padding:2px;
+    line-height:1.1;
+  }
+  .cell.full{background:var(--success);}
+  .cell.partial{background:var(--amber);}
+  .cell.none{background:var(--panel-light);border:1px solid var(--line);color:var(--text-dim);}
+
+  .legend-row{display:flex;gap:16px;margin-top:14px;font-size:11px;color:var(--text-dim);flex-wrap:wrap;}
+  .legend-row span{display:inline-flex;align-items:center;gap:5px;}
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+  .takeaway{
+    margin-top:24px;background:var(--panel);border:1px solid var(--amber);border-radius:6px;
+    padding:20px 22px;
+  }
+  .takeaway .kicker{color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;}
+  .takeaway p{font-size:15px;color:var(--text);margin:0;line-height:1.6;}
+  .takeaway .attribution{font-size:11.5px;color:var(--text-dim);margin-top:10px;}
+
+  .source-note{margin-top:16px;font-size:11px;color:var(--text-dim);}
+  footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--text-dim);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><b>IEG</b> Curriculum Package</div>
+  <a href="index.html">← Back to hub</a>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>U.S. Market Alignment</h1>
+    <p>How much of this module maps onto credentials already running in U.S. CTE programs — shown honestly, not oversold.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="kicker">General Knowledge Layer</div>
+      <h2>MSSC CLA / CLT</h2>
+      <div class="big-stat">78%</div>
+      <div class="stat-sub">7 of 9 official CLT work activities covered</div>
+      <div class="seg-bar">
+        <div class="seg on"></div><div class="seg on"></div><div class="seg on"></div>
+        <div class="seg on"></div><div class="seg on"></div><div class="seg on"></div>
+        <div class="seg on"></div><div class="seg off"></div><div class="seg off"></div>
+      </div>
+      <div class="seg-legend">Receiving · Storage · Order Processing · Packaging & Shipment · Inventory Control · Dispatch & Tracking · Measurements</div>
+      <div class="gap-list">
+        <b>NOT COVERED (out of scope)</b>
+        Safe handling of hazmat materials · Evaluation of transportation modes
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="kicker">Automation-Specific Layer</div>
+      <h2>MSSC CT-SCA</h2>
+      <div class="big-stat">~15–20%</div>
+      <div class="stat-sub">Category-level overlap across 16 named skill areas</div>
+
+      <div class="cert-group">
+        <div class="label">EQUIPMENT MAINTENANCE (EM)</div>
+        <div class="cell-row">
+          <div class="cell none">Prev. Maint.</div>
+          <div class="cell none">Equip. Adj.</div>
+          <div class="cell partial">Measure</div>
+          <div class="cell none">Hand Tools</div>
+          <div class="cell full">Sys. Monitor</div>
+        </div>
+      </div>
+      <div class="cert-group">
+        <div class="label">EQUIPMENT REPAIR (ER)</div>
+        <div class="cell-row">
+          <div class="cell none">Pneumatics</div>
+          <div class="cell none">Mechanics</div>
+          <div class="cell none">Elec. Install</div>
+          <div class="cell full">Sys. Trouble</div>
+          <div class="cell none">Print Read</div>
+        </div>
+      </div>
+      <div class="cert-group">
+        <div class="label">NETWORK REPAIR (NR)</div>
+        <div class="cell-row">
+          <div class="cell none">PLCs</div>
+          <div class="cell none">VFDs</div>
+          <div class="cell partial">Barcode</div>
+          <div class="cell none">Ethernet</div>
+          <div class="cell none">Elec. Install</div>
+          <div class="cell full">Sys. Trouble</div>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <span><span class="swatch" style="background:var(--success);"></span>Full match</span>
+        <span><span class="swatch" style="background:var(--amber);"></span>Partial</span>
+        <span><span class="swatch" style="background:var(--panel-light);border:1px solid var(--line);"></span>No overlap</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="takeaway">
+    <div class="kicker">The Line to Use With Peter</div>
+    <p>"Two-thirds of CT-SCA is physical electromechanical repair — pneumatics, wiring, hand tools. That's not what we do. Where we genuinely overlap is the Network Repair track — the systems and data layer, which is exactly where i-MOBA and WMS integration live. We're not a CT-SCA replacement. We're the low-cost entry point into the third of it that's actually adjacent to what we teach."</div>
+  </div>
+
+  <div class="source-note">Source: category structure from Amatrol's public Skill Boss Logistics (95-MSB3) product documentation — the required CT-SCA assessment device. The full itemized 100-skill list is distributed only through MSSC Training Solution Providers; this reflects category-level, not skill-by-skill, precision.</div>
+
+  <footer>IEG × BluWorkz Trial — U.S. Market Alignment · full written analysis available on request</footer>
+</div>
+
+</body>
+</html>

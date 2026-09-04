@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trial Feedback — IEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --graphite:#3f454b; --panel:#4a5158; --panel-light:#545c64; --line:#646d75;
+    --steel:#6d9bb8; --steel-dim:#4a6c80; --amber:#e8a33d; --alert:#c2564b;
+    --success:#6fa77a; --text:#e9e6dd; --text-dim:#c3c9cd;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--graphite);color:var(--text);font-family:'IBM Plex Sans',sans-serif;line-height:1.5;}
+  h1,h2{font-family:'Barlow Condensed',sans-serif;font-weight:600;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);}
+  .topbar a{color:var(--steel);text-decoration:none;font-size:13px;}
+  .brand{font-size:13px;color:var(--text-dim);}
+  .brand b{color:var(--steel);}
+  .wrap{max-width:560px;margin:0 auto;padding:34px 20px 60px;}
+  h1{font-size:30px;margin:0 0 6px;}
+  .wrap > p{color:var(--text-dim);font-size:13.5px;margin:0 0 26px;}
+
+  label{display:block;font-size:12.5px;color:var(--text-dim);margin:16px 0 6px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.03em;}
+  input,select,textarea{
+    width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);
+    padding:10px 12px;border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;
+  }
+  textarea{min-height:130px;resize:vertical;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--steel);}
+
+  .rating-row{display:flex;gap:8px;margin-top:6px;}
+  .rating-row button{
+    flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text-dim);
+    padding:9px 0;border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:13px;
+  }
+  .rating-row button.selected{background:var(--steel-dim);border-color:var(--steel);color:var(--text);}
+
+  .submit-btn{
+    width:100%;background:var(--steel-dim);border:1px solid var(--steel);color:var(--text);
+    padding:13px;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-size:17px;
+    font-weight:600;cursor:pointer;margin-top:24px;
+  }
+  .submit-btn:hover{background:var(--steel);}
+  .note{font-size:11.5px;color:var(--text-dim);margin-top:10px;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><b>IEG</b> × BluWorkz Trial</div>
+  <a href="index.html">← Back to hub</a>
+</div>
+
+<div class="wrap">
+  <h1>Trial Feedback</h1>
+  <p>Quick notes as you go — this opens your email client addressed to your IEG contact, nothing is stored on this page.</p>
+
+  <label for="fName">Your name</label>
+  <input type="text" id="fName" placeholder="e.g. Jane Smith">
+
+  <label for="fRole">Role</label>
+  <select id="fRole">
+    <option>Instructor running the trial</option>
+    <option>Student / participant</option>
+    <option>Program administrator</option>
+    <option>Other</option>
+  </select>
+
+  <label for="fModule">Which part is this about?</label>
+  <select id="fModule">
+    <option>General / whole trial</option>
+    <option>Principle module</option>
+    <option>Equipment Operation module</option>
+    <option>Hands-On Scenario module</option>
+    <option>WMS Troubleshooting module</option>
+    <option>LMS Instructor Dashboard</option>
+    <option>Instructor Guide / Reference Guide</option>
+    <option>Assessment Rubric</option>
+  </select>
+
+  <label>How's it going overall?</label>
+  <div class="rating-row" id="ratingRow">
+    <button type="button" data-v="Working great">🙂 Great</button>
+    <button type="button" data-v="Mixed / some friction">😐 Mixed</button>
+    <button type="button" data-v="Not working for us">🙁 Struggling</button>
+  </div>
+
+  <label for="fText">Details</label>
+  <textarea id="fText" placeholder="What's working, what's confusing, what students are getting stuck on..."></textarea>
+
+  <button class="submit-btn" onclick="sendFeedback()">Send Feedback</button>
+  <div class="note">Opens your default email app, addressed to kellycho824@ieg.kr</div>
+</div>
+
+<script>
+  let rating = '';
+  document.querySelectorAll('#ratingRow button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('#ratingRow button').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      rating = btn.dataset.v;
+    });
+  });
+
+  function sendFeedback(){
+    const name = document.getElementById('fName').value || '(not provided)';
+    const role = document.getElementById('fRole').value;
+    const module = document.getElementById('fModule').value;
+    const text = document.getElementById('fText').value || '(no details entered)';
+    const subject = encodeURIComponent('BluWorkz Trial Feedback — ' + module);
+    const body = encodeURIComponent(
+      `Name: ${name}\nRole: ${role}\nRe: ${module}\nOverall: ${rating || '(not rated)'}\n\nDetails:\n${text}`
+    );
+    window.location.href = `mailto:kellycho824@ieg.kr?subject=${subject}&body=${body}`;
+  }
+</script>
+
+</body>
+</html>
