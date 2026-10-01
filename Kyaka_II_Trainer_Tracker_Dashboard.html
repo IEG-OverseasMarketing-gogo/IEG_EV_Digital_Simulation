@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kyaka II | 11-Week Trainer Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F7F6; --card:#FFFFFF; --ink:#12303A; --muted:#566E75; --line:#D5E0E0;
+  --teal:#1F6F78; --teal-soft:#DCEEEF;
+  --amber:#9A6412; --amber-soft:#F7E8CC;
+  --red:#A3302A; --red-soft:#F6DAD7;
+  --green:#2B7347; --green-soft:#D9EEDF;
+  --c1:#1F6F78; --c2:#C4781A; --c3:#6B4FA3; --c4:#3566A8;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Figtree','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:12px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.55 var(--body)}
+a{color:var(--teal)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid #E0A526;outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+
+/* header */
+header{display:grid;gap:14px;margin-bottom:22px}
+.who{font-size:14px;color:var(--muted);margin:0}
+h1{font:700 clamp(28px,4.6vw,44px)/1.08 var(--display);margin:0;letter-spacing:-.01em}
+.lede{max-width:64ch;margin:0;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.btn{border:1.5px solid var(--teal);background:var(--teal);color:#fff;border-radius:8px;padding:9px 14px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--teal)}
+.btn:hover{filter:brightness(1.08)}
+.status{font-size:13.5px;color:var(--muted);min-height:1.4em}
+.status b{color:var(--ink)}
+.banner{border-left:5px solid var(--amber);background:var(--amber-soft);padding:10px 14px;border-radius:0 8px 8px 0;font-size:14px;display:none}
+.banner.err{border-color:var(--red);background:var(--red-soft)}
+
+h2{font:700 22px/1.2 var(--display);margin:0 0 4px}
+.sub{margin:0 0 16px;color:var(--muted);font-size:14px;max-width:70ch}
+section{margin-top:40px}
+
+/* filter chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-weight:500;color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--line);background:var(--card);border-radius:10px}
+.kpi{padding:14px 16px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kpi .n{font:700 30px/1 var(--display)}
+.kpi .l{font-size:13px;color:var(--muted);margin-top:4px}
+.kpi .w{font-size:12px;color:var(--muted)}
+
+/* chart */
+.chartbox{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 10px 8px}
+.chartbox svg{width:100%;height:auto;display:block}
+.weeknote{font-size:13px;color:var(--muted);margin:8px 6px 4px}
+
+/* grid */
+.gridscroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table.wk{border-collapse:collapse;width:100%;min-width:760px}
+table.wk th,table.wk td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line);font-size:13px}
+table.wk th{font-weight:600;color:var(--muted);vertical-align:bottom}
+table.wk th.stage{border-bottom:1px solid var(--line);text-align:left;padding-left:10px;font-size:12px}
+table.wk td.nm,table.wk th.nm{text-align:left;padding-left:12px;font-weight:600;white-space:nowrap;min-width:130px}
+table.wk tr:last-child td{border-bottom:0}
+.cell{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:7px;font-weight:700;font-size:13px;border:1.5px solid transparent}
+.cell.P{background:var(--green-soft);color:var(--green);border-color:#B3DBBF}
+.cell.L{background:var(--amber-soft);color:var(--amber);border-color:#EBCB8D}
+.cell.A{background:var(--red-soft);color:var(--red);border-color:#E8B1AC}
+.cell.E{background:var(--teal-soft);color:var(--teal);border-color:#B6D9DB}
+.cell.none{background:transparent;color:#9BB0B3;border:1.5px dashed var(--line);font-weight:400}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:10px 2px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .cell{width:22px;height:22px;font-size:11px;border-radius:5px}
+
+/* signals */
+.signals{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.sig{display:grid;grid-template-columns:auto 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.sev{align-self:start;font-size:12px;font-weight:700;border-radius:6px;padding:3px 9px;white-space:nowrap}
+.sev.high{background:var(--red-soft);color:var(--red)}
+.sev.mid{background:var(--amber-soft);color:var(--amber)}
+.sev.good{background:var(--green-soft);color:var(--green)}
+.sig b{display:block}
+.sig span.d{color:var(--muted);font-size:14px}
+
+/* trainer snapshot */
+.snap{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px}
+.tcard{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--c1);border-radius:10px;padding:14px 16px}
+.tcard h3{font:700 18px/1.2 var(--display);margin:0 0 2px}
+.tcard .role{font-size:13px;color:var(--muted);margin:0 0 10px}
+.big{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.big .n{font:700 34px/1 var(--display)}
+.big .l{font-size:13px;color:var(--muted)}
+.m{display:grid;grid-template-columns:96px 1fr 44px;align-items:center;gap:8px;font-size:13px;margin:5px 0}
+.bar{height:8px;background:#E7EEEE;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--teal);border-radius:4px}
+.m .v{text-align:right;font-weight:600}
+.last{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px}
+.last .h{color:var(--muted);font-size:12.5px;margin-bottom:2px}
+
+/* notes */
+.notes{display:grid;gap:10px}
+.note{display:grid;grid-template-columns:150px 1fr;gap:14px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c1);border-radius:10px;padding:12px 14px}
+.note .who2{font-weight:600}
+.note .when{font-size:12.5px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;margin-top:6px}
+.pill.s5,.pill.s4{background:var(--green-soft);color:var(--green)}
+.pill.s3{background:var(--amber-soft);color:var(--amber)}
+.pill.s2,.pill.s1{background:var(--red-soft);color:var(--red)}
+.note p{margin:0}
+.note .fu{margin-top:6px;font-size:13.5px;color:var(--muted)}
+.empty{background:var(--card);border:1.5px dashed var(--line);border-radius:10px;padding:22px;color:var(--muted)}
+.empty ol{margin:8px 0 0 18px;padding:0}
+
+dialog{border:1px solid var(--line);border-radius:12px;max-width:520px;width:calc(100% - 32px);padding:20px;color:var(--ink)}
+dialog::backdrop{background:rgba(18,48,58,.45)}
+dialog label{display:block;font-weight:600;margin:12px 0 6px}
+dialog input[type=text]{width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+dialog small{color:var(--muted);display:block;margin-top:6px}
+footer{margin-top:48px;font-size:13px;color:var(--muted);max-width:75ch}
+
+@media (max-width:640px){
+  .note{grid-template-columns:1fr}
+  .kpi{border-right:0;border-bottom:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.cell.V{background:#F9E1D2;color:#9A3F12;border-color:#EBB896}
+.pc{display:inline-grid;place-items:center;min-width:42px;height:30px;padding:0 6px;border-radius:7px;font-weight:700;font-size:12.5px}
+.pc.hi{background:var(--green-soft);color:var(--green)}
+.pc.mid{background:var(--amber-soft);color:var(--amber)}
+.pc.lo{background:var(--red-soft);color:var(--red)}
+.pc.none{background:transparent;color:#9BB0B3;border:1.5px dashed var(--line);font-weight:400}
+.hard{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.hard li{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.hard .pc{align-self:start}
+.hard small{color:var(--muted);display:block}
+.warn{background:var(--amber-soft);border-left:5px solid var(--amber);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14px;margin-top:12px}
+.thisweek{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin:14px 0 0;font-size:14px;color:var(--muted)}
+.thisweek b{color:var(--ink)}
+dialog input[type=url],dialog input[type=text]{width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;font:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="who">Kyaka II Vocational Skills Training Center · coordinator dashboard</p>
+  <h1>11-week trainer pulse</h1>
+  <p class="lede">Attendance and workbook scores arrive automatically when the four trainers save their weekly workbook. The coordinator's attitude scores and comments come from the tracker sheet.</p>
+  <div class="actions">
+    <button class="btn" id="btnRefresh" type="button">Refresh from Google Sheet</button>
+    <button class="btn ghost" id="btnConnect" type="button">Connect sheet</button>
+    <button class="btn ghost" id="btnExcel" type="button">Load updated Excel</button>
+    <button class="btn ghost" id="btnSample" type="button">Preview with sample data</button>
+    <input type="file" id="fileExcel" accept=".xlsx,.xls" hidden>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div class="banner" id="banner" role="alert"></div>
+</header>
+
+<div id="app"></div>
+
+<footer>
+  Weighted score: Attendance 50% · Submission 20% · Workbook 20% · Attitude 10% (editable on the sheet's Settings tab; this page reads those values). Attendance is Present, Late or Very late depending on how long after opening the workbook a trainer first saves the week; the Settings tab holds the minute limits. A week with no save after its closing date counts as Absent. Until the coordinator enters an attitude score, a week is scored on the other three parts. Choose the latest Excel file to refresh locally in your browser — nothing is uploaded.
+</footer>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="dlgForm">
+    <h2 style="font-size:20px">Connect the tracker</h2>
+    <label for="appsUrl">Kyaka II Web App URL (Apps Script)</label>
+    <input type="url" id="appsUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+    <small>This is the URL from Deploy → Web app in the Kyaka II Apps Script, with access set to “Anyone”. It is saved in this browser only.</small>
+    <div class="row">
+      <button class="btn ghost" value="cancel" type="submit">Cancel</button>
+      <button class="btn" value="save" type="submit">Save and refresh</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ---------- config ---------- */
+const DEFAULT_APPS_SCRIPT_URL = "";   // paste the Kyaka II Web App URL here so every device is pre-connected
+const WEEKS = ["Circuit Basics","Safety Procedure & PPE","Insulation Resistance","Sensors & Actuators","Ladder Logic",
+  "Alarms, Interlocks & HMI","Capstone: Inspection Station","EV System Overview","SOC & SOH","AC/DC Charging","Integrated Review"];
+const STAGES = [{n:"Stage 1 · Electrical",from:1,to:3},{n:"Stage 2 · PLC & Control",from:4,to:7},{n:"Stage 3 · EV",from:8,to:11}];
+const COLORS = ["#1F6F78","#C4781A","#6B4FA3","#3566A8","#2B7347","#A3302A"];
+const DEFAULTS = {wA:.5,wS:.2,wW:.2,wT:.1,pts:{present:100,late:75,vlate:0,absent:0}};
+const AUTO_MS = 5*60*1000;
+
+/* ---------- state ---------- */
+const S = {trainers:[],cells:{},weeks:{},unknown:[],settings:structuredClone(DEFAULTS),questions:[],
+  filter:"all",source:"",updated:null,sample:false,showAllNotes:false,currentWeek:null,latestHeld:null};
+const $ = id => document.getElementById(id);
+
+/* ---------- helpers ---------- */
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = v => { if(v===null||v===undefined) return null; const s=String(v).trim(); if(s==="") return null;
+  const n=parseFloat(s.replace(/[%,]/g,"")); return isNaN(n)?null:n; };
+const wfrac = v => { const n=num(v); return n===null?null:(n>1?n/100:n); };
+const mean = a => { const x=a.filter(v=>v!==null&&v!==undefined&&!isNaN(v)); return x.length?x.reduce((p,c)=>p+c,0)/x.length:null; };
+const pct = v => v===null||v===undefined?"–":Math.round(v)+"%";
+const colorOf = i => COLORS[i%COLORS.length];
+const norm = s => String(s??"").toLowerCase().replace(/\s+/g," ").trim();
+const weekNo = v => { const m=String(v??"").match(/(\d+)/); return m?parseInt(m[1],10):null; };
+
+function objs(aoa){
+  if(!aoa||!aoa.length) return [];
+  const hi=aoa.findIndex(r=>r.some(v=>{const t=norm(v);return t==="name"||t==="week";}));
+  if(hi<0) return [];
+  const h=aoa[hi].map(x=>String(x??"").trim());
+  return aoa.slice(hi+1).map(r=>{const o={}; h.forEach((k,i)=>{ if(k) o[k]=r[i]??""; }); return o;})
+    .filter(o=>Object.values(o).some(v=>String(v).trim()!==""));
+}
+function pick(o,...keys){ for(const k of keys){ const f=Object.keys(o).find(x=>norm(x)===norm(k)); if(f!==undefined) return o[f]; } return ""; }
+function parseDay(s,endOfDay){
+  const t=String(s??"").trim(); if(!t) return null;
+  let m=t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+  let d;
+  if(m){ d=new Date(+m[1],+m[2]-1,+m[3],m[4]?+m[4]:0,m[5]?+m[5]:0);
+         if(endOfDay&&(!m[4]||(+m[4]===0&&+m[5]===0))) d.setHours(23,59,59,0); }
+  else { d=new Date(t); if(isNaN(d)) return null; if(endOfDay&&d.getHours()===0&&d.getMinutes()===0) d.setHours(23,59,59,0); }
+  return d;
+}
+
+/* ---------- loading ---------- */
+function getUrl(){ return new URLSearchParams(location.search).get("src")||localStorage.getItem("kyaka_apps_script")||DEFAULT_APPS_SCRIPT_URL; }
+async function refreshFromSheet(silent){
+  const url=getUrl();
+  if(!url){ if(!silent) openConnect(); return; }
+  if(!silent){ setStatus("Reading the Google Sheet…"); showBanner(""); }
+  try{
+    const r=await fetch(url+(url.includes("?")?"&":"?")+"_ts="+Date.now());
+    if(!r.ok) throw new Error("the web app returned HTTP "+r.status);
+    const t=await r.text(); let j;
+    try{ j=JSON.parse(t); }catch(e){ throw new Error("the web app did not return data — in Apps Script, set “Who has access” to Anyone and deploy a new version"); }
+    if(j.error) throw new Error(j.error);
+    ingest(j,"Google Sheet");
+  }catch(e){
+    showBanner((silent?"Auto-refresh skipped — ":"Could not read the sheet — ")+e.message+". The dashboard shows the last data it loaded; “Load updated Excel” also works.",true);
+    if(!silent) setStatus("");
+  }
+}
+function loadExcel(file){
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array"});
+      const g=n=>{ const ws=wb.Sheets[n]; return ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}):[]; };
+      const raw={roster:g("Roster"),windows:g("Session Windows"),attitude:g("Attitude & Mentor Score"),weekly:g("Workbook Weekly Summary"),
+                 answers:g("Workbook Answers"),settings:g("Settings")};
+      if(!raw.roster.length&&!raw.weekly.length) throw new Error("none of the expected tabs (Roster, Workbook Weekly Summary…) were found");
+      ingest(raw,"Excel file: "+file.name);
+    }catch(err){ showBanner("Could not read that Excel file — "+err.message,true); }
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+/* ---------- ingest: build one record per trainer per week ---------- */
+function ingest(raw,source){
+  showBanner(""); S.sample=false;
+  // settings
+  const st=structuredClone(DEFAULTS);
+  (raw.settings||[]).forEach(r=>{
+    const k=norm(r[0]);
+    if(k==="attendance weight"){const w=wfrac(r[1]); if(w!==null) st.wA=w;}
+    else if(k==="submission weight"){const w=wfrac(r[1]); if(w!==null) st.wS=w;}
+    else if(k==="workbook weight"){const w=wfrac(r[1]); if(w!==null) st.wW=w;}
+    else if(k==="attitude weight"){const w=wfrac(r[1]); if(w!==null) st.wT=w;}
+    else if(k==="present points"){const n=num(r[1]); if(n!==null) st.pts.present=n;}
+    else if(k==="late points"){const n=num(r[1]); if(n!==null) st.pts.late=n;}
+    else if(k==="very late points"){const n=num(r[1]); if(n!==null) st.pts.vlate=n;}
+    else if(k==="absent points"){const n=num(r[1]); if(n!==null) st.pts.absent=n;}
+  });
+  S.settings=st;
+
+  // roster + alias map
+  let trainers=objs(raw.roster).map(o=>({name:String(pick(o,"Name")).trim(),aliases:String(pick(o,"Aliases (other spellings, comma separated)","Aliases")).split(/[,;/]/).map(norm).filter(Boolean),
+    role:String(pick(o,"Subject / role (optional)","Subject")).trim()})).filter(t=>t.name);
+  const weeklyO=objs(raw.weekly), answersO=objs(raw.answers), attO=objs(raw.attitude), winO=objs(raw.windows);
+  let fromSaves=false;
+  if(!trainers.length){ // roster not typed yet: fall back to the names that saved
+    const seen=[]; weeklyO.forEach(o=>{const n=String(pick(o,"Name")).trim(); if(n&&!seen.find(x=>norm(x)===norm(n))) seen.push(n);});
+    trainers=seen.map(n=>({name:n,aliases:[],role:""})); fromSaves=true;
+  }
+  const map=new Map(); trainers.forEach((t,i)=>{ map.set(norm(t.name),i); t.aliases.forEach(a=>{ if(!map.has(a)) map.set(a,i); }); });
+  const idx=n=>{ const k=norm(n); return map.has(k)?map.get(k):-1; };
+
+  // windows
+  const win={}; winO.forEach(o=>{ const w=weekNo(pick(o,"Week")); if(!w) return; win[w]={opens:parseDay(pick(o,"Opens (date)","Opens")),closes:parseDay(pick(o,"Closes (date)","Closes"),true)}; });
+
+  // weekly saves
+  const unknown={}; const weekly={};
+  weeklyO.forEach(o=>{
+    const w=weekNo(pick(o,"Week")); const nm=String(pick(o,"Name")).trim(); if(!w||!nm) return;
+    const i=idx(nm); if(i<0){ unknown[nm]=(unknown[nm]||0)+1; return; }
+    const a=norm(pick(o,"Attendance"));
+    const att=a.includes("very")?"vlate":a.includes("late")?"late":a.includes("excus")?"excused":a.includes("absent")?"absent":a.includes("present")?"present":"present";
+    weekly[i+"|"+w]={att,minutes:num(pick(o,"Minutes after start")),saved:pick(o,"Last saved","Timestamp"),reflection:String(pick(o,"Reflection")||"")};
+  });
+  // answers
+  const ans={}; const qAgg={};
+  answersO.forEach(o=>{
+    const w=weekNo(pick(o,"Week")); const nm=String(pick(o,"Name")).trim(); if(!w||!nm) return;
+    const i=idx(nm); if(i<0){ unknown[nm]=unknown[nm]||0; return; }
+    const m=num(pick(o,"Match %")); const k=i+"|"+w; (ans[k]=ans[k]||[]).push(m===null?0:m);
+    const q=String(pick(o,"Question")).trim(); if(q){ const qk=w+"|"+q; (qAgg[qk]=qAgg[qk]||{week:w,q,v:[]}).v.push(m===null?0:m); }
+  });
+  // attitude
+  const att={};
+  attO.forEach(o=>{
+    const w=weekNo(pick(o,"Week")); const nm=String(pick(o,"Name")).trim(); if(!w||!nm) return;
+    const i=idx(nm); if(i<0) return;
+    const sc=num(pick(o,"Score (1-5)","Score")); const cm=String(pick(o,"Coordinator comment","Comment")||"").trim();
+    const fu=String(pick(o,"Follow-up action","Follow-up")||"").trim(); const ov=norm(pick(o,"Attendance override"));
+    if(sc!==null||cm||fu||ov) att[i+"|"+w]={score:sc,comment:cm,follow:fu,override:["present","late","excused","absent"].includes(ov)?ov:""};
+  });
+
+  // which weeks count as "held"
+  const heldWeeks=new Set(Object.keys(weekly).map(k=>+k.split("|")[1]));
+  S.latestHeld=heldWeeks.size?Math.max(...heldWeeks):null;
+  const now=new Date();
+  const isClosed=w=>{ if(win[w]&&win[w].closes) return now>win[w].closes; return S.latestHeld!==null&&w<S.latestHeld; };
+  // current week = open window containing today, otherwise the latest week with any save
+  let cur=null;
+  for(let w=1;w<=WEEKS.length;w++){ const x=win[w]; if(x&&x.opens&&x.closes&&now>=x.opens&&now<=x.closes){ cur=w; break; } }
+  if(cur===null) cur=S.latestHeld;
+  S.currentWeek=cur;
+
+  // build cells
+  const cells={};
+  trainers.forEach((t,i)=>{
+    for(let w=1;w<=WEEKS.length;w++){
+      const k=i+"|"+w, wk=weekly[k], a=att[k], m=ans[k];
+      let status, saved=!!wk;
+      if(a&&a.override) status=a.override;
+      else if(wk) status=wk.att;
+      else status=isClosed(w)?"absent":"pending";
+      const hasAnything=saved||a||status==="absent";
+      if(!hasAnything&&status==="pending"){ cells[k]={w,status:"pending",saved:false,wb:null,at:null,comment:"",follow:"",score:null}; continue; }
+      const wb=m&&m.length?mean(m):null;
+      const cell={w,status,saved,minutes:wk?wk.minutes:null,reflection:wk?wk.reflection:"",wb,at:a?a.score:null,comment:a?a.comment:"",follow:a?a.follow:"",override:a?a.override:""};
+      cell.score=weekScore(cell,st);
+      cells[k]=cell;
+    }
+  });
+  S.trainers=trainers; S.cells=cells;
+  S.unknown=Object.entries(unknown).map(([n,c])=>({name:n,count:c}));
+  S.fromSaves=fromSaves;
+  S.questions=Object.values(qAgg).map(q=>({week:q.week,q:q.q,avg:mean(q.v),n:q.v.length})).filter(q=>q.n>=1).sort((a,b)=>a.avg-b.avg);
+  S.filter="all"; S.source=source; S.updated=new Date();
+  render();
+}
+
+/* ---------- scoring (same weights/rules as the Ntinda dashboard; attitude left out until entered) ---------- */
+function weekScore(c,st){
+  if(c.status==="pending"||c.status==="excused") return null;
+  const a=st.pts[c.status]??0;
+  const sub=c.saved?100:0;
+  const wb=c.wb===null?0:c.wb;
+  let sum=a*st.wA+sub*st.wS+wb*st.wW, wt=st.wA+st.wS+st.wW;
+  if(c.at!==null&&c.at!==undefined){ sum+=Math.max(0,Math.min(5,c.at))*20*st.wT; wt+=st.wT; }
+  return wt?Math.round(sum/wt):null;
+}
+function stats(i){
+  const rs=[]; for(let w=1;w<=WEEKS.length;w++){ const c=S.cells[i+"|"+w]; if(c&&c.status!=="pending") rs.push(c); }
+  const counted=rs.filter(c=>c.status!=="excused");
+  const attRate=counted.length?counted.filter(c=>c.status==="present"||c.status==="late").length/counted.length*100:null;
+  const subRate=counted.length?counted.filter(c=>c.saved).length/counted.length*100:null;
+  const wbAvg=mean(rs.map(c=>c.wb));
+  const atAvg=mean(rs.map(c=>c.at));
+  const overall=mean(rs.map(c=>c.score));
+  const noted=[...rs].reverse().find(c=>c.comment);
+  return {i,name:S.trainers[i].name,rs,attRate,subRate,wbAvg,atAvg,overall,lastNote:noted||null,
+          absences:rs.filter(c=>c.status==="absent").length,vlates:rs.filter(c=>c.status==="vlate").length};
+}
+const visible = () => S.trainers.map((t,i)=>i).filter(i=>S.filter==="all"||S.trainers[i].name===S.filter);
+
+/* ---------- render ---------- */
+function setStatus(t){ $("status").innerHTML=t; }
+function showBanner(t,err){ const b=$("banner"); b.style.display=t?"block":"none"; b.className="banner"+(err?" err":""); b.textContent=t; }
+
+function render(){
+  const app=$("app");
+  if(!S.trainers.length){
+    app.innerHTML=`<div class="empty"><b>No trainers yet.</b><ol>
+      <li>Open the tracker sheet and type the 4 trainer names on the Roster tab.</li>
+      <li>Share the workbook link with the trainers — each save appears on the sheet.</li>
+      <li>Come back here and press “Refresh from Google Sheet”.</li></ol></div>`;
+    setStatus(S.source?`<b>${esc(S.source)}</b> read — no trainers found.`:"Not connected yet. Press “Connect sheet”, or “Preview with sample data”.");
+    return;
+  }
+  const all=S.trainers.map((t,i)=>stats(i));
+  const vis=visible().map(i=>all[i]);
+  const cw=S.currentWeek;
+  let savedThisWeek=0; if(cw) S.trainers.forEach((t,i)=>{ const c=S.cells[i+"|"+cw]; if(c&&c.saved) savedThisWeek++; });
+  setStatus((S.sample?"<b>Sample data</b> (made-up names and numbers)":`<b>${esc(S.source)}</b>`)+
+    (S.updated?` · refreshed ${S.updated.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}`:"")+
+    (S.fromSaves?" · Roster is empty, so names come from the saves":""));
+  if(S.sample) showBanner("This is sample data so you can see the layout. Press “Refresh from Google Sheet” to see the real trainers.");
+  else if($("banner").className==="banner") showBanner("");
+
+  const chips=`<div class="chips" role="group" aria-label="Filter by trainer">
+    <button class="chip" type="button" data-f="all" aria-pressed="${S.filter==="all"}">All trainers</button>
+    ${S.trainers.map((t,i)=>`<button class="chip" type="button" data-f="${esc(t.name)}" aria-pressed="${S.filter===t.name}"><span class="dot" style="background:${colorOf(i)}"></span>${esc(t.name)}</button>`).join("")}</div>`;
+  const k={att:mean(vis.map(v=>v.attRate)),sub:mean(vis.map(v=>v.subRate)),wb:mean(vis.map(v=>v.wbAvg)),at:mean(vis.map(v=>v.atAvg)),ov:mean(vis.map(v=>v.overall))};
+  const st=S.settings;
+  const kpis=`<div class="kpis">
+    <div class="kpi"><div class="n">${pct(k.att)}</div><div class="l">Class attendance</div><div class="w">weight ${Math.round(st.wA*100)}%</div></div>
+    <div class="kpi"><div class="n">${pct(k.sub)}</div><div class="l">Weeks saved</div><div class="w">weight ${Math.round(st.wS*100)}%</div></div>
+    <div class="kpi"><div class="n">${pct(k.wb)}</div><div class="l">Workbook score (auto)</div><div class="w">weight ${Math.round(st.wW*100)}%</div></div>
+    <div class="kpi"><div class="n">${k.at===null?"–":k.at.toFixed(1)}<span style="font-size:15px;font-weight:500"> / 5</span></div><div class="l">Attitude (coordinator)</div><div class="w">weight ${Math.round(st.wT*100)}%</div></div>
+    <div class="kpi"><div class="n">${pct(k.ov)}</div><div class="l">Overall achievement</div><div class="w">weighted</div></div></div>
+    ${cw?`<div class="thisweek"><span>Week ${cw} · ${esc(WEEKS[cw-1]||"")}:</span><b>${savedThisWeek} of ${S.trainers.length} trainers have saved</b></div>`:""}`;
+
+  const unk=S.unknown.length?`<div class="warn"><b>Names that do not match the Roster:</b> ${S.unknown.map(u=>`“${esc(u.name)}”${u.count?` (${u.count} save${u.count===1?"":"s"})`:""}`).join(", ")}.
+     These saves are not counted yet. Add the spelling to the Roster's “Aliases” column and refresh.</div>`:"";
+
+  app.innerHTML=`
+    <section style="margin-top:8px">${chips}${kpis}${unk}</section>
+    <section><h2>Weekly achievement trend</h2>
+      <p class="sub">Each line is one trainer's weighted score for the week. The dashed line at 60 is the watch level.</p>
+      <div class="chartbox">${trendSVG(vis)}</div></section>
+    <section><h2>Attendance by week</h2>
+      <p class="sub">Decided automatically from when each trainer saves the week. Hover or tap a cell for details.</p>
+      ${attGrid(vis)}</section>
+    <section><h2>Workbook score by week</h2>
+      <p class="sub">Auto-graded from the “Check your understanding” answers each trainer saved.</p>
+      ${wbGrid(vis)}</section>
+    <section><h2>What to act on next</h2>
+      <p class="sub">Signals from the latest sessions, most urgent first.</p>
+      ${signalsHTML(vis)}</section>
+    <section><h2>Questions trainers found hardest</h2>
+      <p class="sub">Lowest average auto-grade across all saves. Good topics to revisit together.</p>
+      ${hardHTML()}</section>
+    <section><h2>Coordinator attitude notes</h2>
+      <p class="sub">What the coordinator wrote on the “Attitude &amp; Mentor Score” tab, newest first.</p>
+      ${notesHTML(vis)}</section>
+    <section><h2>Trainer snapshot</h2>
+      <p class="sub">Averages across the weeks recorded so far.</p>
+      <div class="snap">${vis.map(v=>cardHTML(v)).join("")}</div></section>`;
+  app.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{ S.filter=b.dataset.f; render(); }));
+  const bn=$("btnNotes"); if(bn) bn.addEventListener("click",()=>{ S.showAllNotes=!S.showAllNotes; render(); const b2=$("btnNotes"); if(b2) b2.focus(); });
+}
+
+function trendSVG(vis){
+  const W=860,H=310,pl=42,pr=170,pt=14,pb=40,n=WEEKS.length;
+  const x=w=>pl+(w-1)*(W-pl-pr)/(n-1), y=v=>pt+(100-v)*(H-pt-pb)/100;
+  let g="";
+  [0,25,50,75,100].forEach(v=>{ g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#E3EBEB"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#566E75">${v}</text>`; });
+  g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(60)}" y2="${y(60)}" stroke="#A3302A" stroke-dasharray="5 4" opacity=".55"/>`;
+  for(let w=1;w<=n;w++) g+=`<text x="${x(w)}" y="${H-pb+18}" text-anchor="middle" font-size="11.5" fill="#566E75"><title>Week ${w}: ${esc(WEEKS[w-1])}</title>W${w}</text>`;
+  const ends=[];
+  vis.forEach(v=>{
+    const col=colorOf(v.i), pts=[]; for(let w=1;w<=n;w++){ const c=S.cells[v.i+"|"+w]; if(c&&c.score!==null&&c.score!==undefined) pts.push({w,v:c.score}); }
+    if(!pts.length) return;
+    g+=`<path d="${pts.map((p,j)=>(j?"L":"M")+x(p.w)+" "+y(p.v)).join(" ")}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    pts.forEach(p=>{ g+=`<circle cx="${x(p.w)}" cy="${y(p.v)}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1.5"><title>${esc(v.name)} · Week ${p.w}: ${p.v}</title></circle>`; });
+    const last=pts[pts.length-1]; ends.push({name:v.name,col,y:y(last.v)});
+  });
+  ends.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<ends.length;i++) if(ends[i].y-ends[i-1].y<14) ends[i].ly=(ends[i-1].ly!==undefined?ends[i-1].ly:ends[i-1].y)+14;
+  ends.forEach(e=>{ const ly=e.ly!==undefined?e.ly:e.y; g+=`<text x="${W-pr+10}" y="${ly+4}" font-size="12.5" font-weight="600" fill="${e.col}">${esc(e.name.length>20?e.name.slice(0,19)+"…":e.name)}</text>`; });
+  if(!ends.length) g+=`<text x="${(W-pr)/2+pl/2}" y="${H/2}" text-anchor="middle" fill="#566E75" font-size="14">No weekly scores yet — they appear once a trainer saves a week.</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weekly weighted score per trainer, weeks 1 to ${n}">${g}</svg>
+    <p class="weeknote">Weeks follow the workbook: W1–W3 electrical basics, W4–W7 PLC &amp; control, W8–W11 EV fundamentals. A week is scored without attitude until the coordinator enters it.</p>`;
+}
+
+function headRows(){
+  let h=`<thead><tr><th class="nm"></th>`;
+  STAGES.forEach(s=>{ h+=`<th class="stage" colspan="${s.to-s.from+1}">${s.n}</th>`; });
+  h+=`</tr><tr><th class="nm">Trainer</th>`;
+  for(let w=1;w<=WEEKS.length;w++) h+=`<th title="${esc(WEEKS[w-1])}">W${w}</th>`;
+  return h+`</tr></thead>`;
+}
+function attGrid(vis){
+  const code={present:"P",late:"L",vlate:"V",absent:"A",excused:"E"};
+  const label={present:"Present",late:"Late",vlate:"Very late",absent:"Absent (no save)",excused:"Excused"};
+  let h=`<div class="gridscroll"><table class="wk">${headRows()}<tbody>`;
+  vis.forEach(v=>{
+    h+=`<tr><td class="nm">${esc(v.name)}</td>`;
+    for(let w=1;w<=WEEKS.length;w++){
+      const c=S.cells[v.i+"|"+w];
+      if(!c||c.status==="pending") h+=`<td><span class="cell none" title="Week ${w}: not yet">·</span></td>`;
+      else h+=`<td><span class="cell ${code[c.status]}" title="Week ${w} · ${label[c.status]}${c.override?" (set by coordinator)":""}${c.minutes!==null&&c.minutes!==undefined&&!c.override?" · saved "+Math.round(c.minutes)+" min after opening":""}${c.score!==null?" · score "+c.score:""}">${code[c.status]}</span></td>`;
+    }
+    h+=`</tr>`;
+  });
+  return h+`</tbody></table></div><div class="legend">
+    <span><span class="cell P">P</span>Present</span><span><span class="cell L">L</span>Late</span><span><span class="cell V">V</span>Very late</span>
+    <span><span class="cell A">A</span>Absent</span><span><span class="cell E">E</span>Excused</span><span><span class="cell none">·</span>Not yet</span></div>`;
+}
+function wbGrid(vis){
+  let h=`<div class="gridscroll"><table class="wk">${headRows()}<tbody>`;
+  vis.forEach(v=>{
+    h+=`<tr><td class="nm">${esc(v.name)}</td>`;
+    for(let w=1;w<=WEEKS.length;w++){
+      const c=S.cells[v.i+"|"+w];
+      if(!c||c.wb===null||c.wb===undefined) h+=`<td><span class="pc none" title="Week ${w}: no answers saved">·</span></td>`;
+      else { const cl=c.wb>=75?"hi":c.wb>=50?"mid":"lo"; h+=`<td><span class="pc ${cl}" title="Week ${w}: ${Math.round(c.wb)}%">${Math.round(c.wb)}</span></td>`; }
+    }
+    h+=`</tr>`;
+  });
+  return h+`</tbody></table></div>`;
+}
+
+function signalsHTML(vis){
+  const out=[];
+  vis.forEach(v=>{
+    const last2=v.rs.slice(-2);
+    if(v.absences>=2||(last2.length===2&&last2.every(c=>c.status==="absent")))
+      out.push({sev:3,cls:"high",tag:"Attendance",who:v.name,txt:`${v.absences} week${v.absences===1?"":"s"} with no save (attendance ${pct(v.attRate)}). Check whether they are blocked by internet or something else.`});
+    else if(v.attRate!==null&&v.attRate<75)
+      out.push({sev:2,cls:"mid",tag:"Attendance",who:v.name,txt:`Attendance is ${pct(v.attRate)}, under the 75% line.`});
+    if(v.vlates>=2) out.push({sev:1,cls:"mid",tag:"Timing",who:v.name,txt:`${v.vlates} saves came more than the “Late” limit after opening the workbook.`});
+    const wa=v.rs.filter(c=>c.at!==null&&c.at!==undefined), la=wa[wa.length-1], pa=wa[wa.length-2];
+    if(la&&la.at<=2) out.push({sev:3,cls:"high",tag:"Attitude",who:v.name,txt:`Week ${la.w} attitude scored ${la.at}/5${la.comment?` — “${la.comment.replace(/[.\s]+$/,"")}”`:""}. The rubric calls for one-on-one follow-up.`});
+    else if(la&&pa&&pa.at-la.at>=2) out.push({sev:2,cls:"mid",tag:"Attitude",who:v.name,txt:`Attitude fell from ${pa.at} (Week ${pa.w}) to ${la.at} (Week ${la.w}).`});
+    const wbw=v.rs.filter(c=>c.wb!==null&&c.wb!==undefined), lw=wbw[wbw.length-1];
+    if(v.wbAvg!==null&&v.wbAvg<60) out.push({sev:2,cls:"mid",tag:"Workbook",who:v.name,txt:`Workbook average is ${pct(v.wbAvg)}. Review their saved answers with them.`});
+    else if(lw&&lw.wb<50) out.push({sev:1,cls:"mid",tag:"Workbook",who:v.name,txt:`Week ${lw.w} workbook scored ${Math.round(lw.wb)}%.`});
+    if(S.currentWeek){
+      const c=S.cells[v.i+"|"+S.currentWeek];
+      if(c&&c.status==="pending") out.push({sev:1,cls:"mid",tag:"Not saved yet",who:v.name,txt:`Week ${S.currentWeek} has not been saved yet.`});
+      const ci=v.rs.filter(x=>x.saved&&x.w<=S.currentWeek&&(x.at===null||x.at===undefined)&&x.status!=="excused");
+      if(ci.length) out.push({sev:0,cls:"mid",tag:"Your turn",who:v.name,txt:`No attitude score yet for week${ci.length>1?"s":""} ${ci.map(x=>x.w).join(", ")}. Add it on the Attitude & Mentor Score tab.`});
+    }
+    if(la&&la.at===5&&v.overall!==null&&v.overall>=90&&v.absences===0) out.push({sev:-1,cls:"good",tag:"Strong",who:v.name,txt:`Overall ${pct(v.overall)} with top attitude scores — a good candidate to mentor the others.`});
+  });
+  if(!out.length) return `<div class="empty">Nothing needs action right now.</div>`;
+  out.sort((a,b)=>b.sev-a.sev);
+  return `<ul class="signals">${out.map(o=>`<li class="sig"><span class="sev ${o.cls}">${o.tag}</span><div><b>${esc(o.who)}</b><span class="d">${esc(o.txt)}</span></div></li>`).join("")}</ul>`;
+}
+function hardHTML(){
+  const qs=S.questions.slice(0,3);
+  if(!qs.length) return `<div class="empty">No graded answers yet.</div>`;
+  return `<ul class="hard">${qs.map(q=>`<li><span class="pc ${q.avg>=75?"hi":q.avg>=50?"mid":"lo"}">${Math.round(q.avg)}%</span><div>${esc(q.q)}<small>Week ${q.week} · ${q.n} answer${q.n===1?"":"s"}</small></div></li>`).join("")}</ul>`;
+}
+function notesHTML(vis){
+  const items=[]; vis.forEach(v=>v.rs.forEach(c=>{ if(c.comment||c.follow) items.push({v,c}); }));
+  if(!items.length) return `<div class="empty">No comments yet. Add one in the “Coordinator comment” column and refresh.</div>`;
+  items.sort((a,b)=>b.c.w-a.c.w||a.v.i-b.v.i);
+  const lab={5:"Excellent",4:"Good",3:"Fair",2:"Needs improvement",1:"Poor"}, LIMIT=8;
+  const shown=S.showAllNotes?items:items.slice(0,LIMIT);
+  const more=items.length>LIMIT?`<button class="btn ghost" id="btnNotes" type="button" style="justify-self:start">${S.showAllNotes?"Show only the newest "+LIMIT:"Show all "+items.length+" notes"}</button>`:"";
+  return `<div class="notes">${shown.map(({v,c})=>`<article class="note" style="border-left-color:${colorOf(v.i)}">
+      <div><div class="who2">${esc(v.name)}</div><div class="when">Week ${c.w} · ${esc(WEEKS[c.w-1]||"")}</div>
+        ${c.at!==null&&c.at!==undefined?`<span class="pill s${Math.round(c.at)}">${c.at}/5 ${lab[Math.round(c.at)]||""}</span>`:""}</div>
+      <div>${c.comment?`<p>${esc(c.comment)}</p>`:`<p style="color:var(--muted)">No comment written.</p>`}${c.follow?`<p class="fu"><b>Follow-up:</b> ${esc(c.follow)}</p>`:""}</div></article>`).join("")}${more}</div>`;
+}
+function cardHTML(v){
+  const t=S.trainers[v.i];
+  const bar=(l,val,max=100)=>`<div class="m"><span>${l}</span><div class="bar" role="img" aria-label="${l} ${val===null?"no data":Math.round(val/max*100)+"%"}"><i style="width:${val===null?0:Math.min(100,val/max*100)}%;background:${colorOf(v.i)}"></i></div><span class="v">${val===null?"–":(max===5?val.toFixed(1):Math.round(val)+"%")}</span></div>`;
+  return `<article class="tcard" style="border-top-color:${colorOf(v.i)}">
+    <h3>${esc(v.name)}</h3><p class="role">${esc(t.role||"Trainer")} · ${v.rs.length} week${v.rs.length===1?"":"s"} recorded</p>
+    <div class="big"><span class="n">${pct(v.overall)}</span><span class="l">overall achievement</span></div>
+    ${bar("Attendance",v.attRate)}${bar("Weeks saved",v.subRate)}${bar("Workbook",v.wbAvg)}${bar("Attitude /5",v.atAvg,5)}
+    <div class="last"><div class="h">${v.lastNote?`Latest coordinator note · Week ${v.lastNote.w}`:"Coordinator note"}</div>${v.lastNote?esc(v.lastNote.comment):`<span style="color:var(--muted)">No comment yet.</span>`}</div></article>`;
+}
+
+/* ---------- sample data in the exact shape the Apps Script returns ---------- */
+function sampleRaw(){
+  const names=["Sample Trainer 1","Sample Trainer 2","Sample Trainer 3","Sample Trainer 4"];
+  const today=new Date(); const day=d=>{ const x=new Date(today); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); };
+  const windows=[["Week","Topic","Opens (date)","Closes (date)"]]; for(let w=1;w<=11;w++) windows.push([w,WEEKS[w-1],day((w-6)*7-4),day((w-6)*7+2)]);
+  const roster=[["No.","Name","Aliases (other spellings, comma separated)","Subject / role (optional)"],...names.map((n,i)=>[i+1,n,i===1?"S Trainer 2":"",""])];
+  const plan=[["present","present","present","late","present","present"],["present","late","vlate",null,"late","present"],["late","present","present","present","present",null],["present","present","present",null,"present","late"]];
+  const wbp=[[100,100,100,50,100,100],[50,50,0,null,50,100],[100,100,100,100,50,null],[100,50,100,null,50,100]];
+  const att=[[5,5,5,4,5,5],[3,3,2,2,3,4],[4,4,5,5,4,null],[4,4,4,2,3,3]];
+  const cm=[["Led the series/parallel practice.","","Helped a colleague with insulation readings.","Late once, caught up.","","Explained ladder AND/OR to the group."],
+    ["Quiet at the start.","","Saved very late, looked rushed.","No save; no message.","Back and trying; needs encouragement.","Asked good questions on the HMI task."],
+    ["Late but engaged.","","","Steady and supportive.","","" ],["","","","Did not join; family matter.","Distracted during practice.","Late; participation improving."]];
+  const weekly=[["Timestamp","Name","Cohort","Week","Week title","Session start","Minutes after start","Attendance","Last saved","Reflection"]];
+  const answers=[["Timestamp","Name","Cohort","Week","Question","Answer","Key answer","Match %"]];
+  const attitude=[["Week","Topic","Name","Score (1-5)","Label","Coordinator comment","Follow-up action","Attendance override"]];
+  const Q=["If V = 24V and R = 6Ω, what is I?","Why is the \"wait\" step included?","Minimum acceptable insulation resistance at 400V?","Is a push-button a sensor or an actuator?","Series or parallel for an EITHER/OR rung?","Why can't you rely on colour alone?"];
+  names.forEach((n,t)=>{ for(let w=1;w<=6;w++){
+    const p=plan[t][w-1];
+    if(p){ const nm=(t===1&&w===5)?"S Trainer 2":n; weekly.push([day((w-6)*7),nm,"Sample cohort","Week "+w,"",day((w-6)*7),p==="present"?40:p==="late"?150:300,p==="vlate"?"Very late":p==="late"?"Late":"Present",day((w-6)*7),"Reflection text"]);
+      const m=wbp[t][w-1]; if(m!==null){ answers.push([day((w-6)*7),nm,"Sample cohort","Week "+w,Q[w-1],"answer","key",m]); } }
+    const s=att[t][w-1]; if(s!==null||cm[t][w-1]) attitude.push([w,WEEKS[w-1],n,s===null?"":s,"",cm[t][w-1],(t===1&&w===4)?"Phone call before next session":"",(t===3&&w===4)?"Excused":""]);
+  }});
+  weekly.push([day(-1),"Jon Unknown","Sample cohort","Week 6","",day(-1),30,"Present",day(-1),""]);
+  return {roster,windows,weekly,answers,attitude,settings:[]};
+}
+function loadSample(){ ingest(sampleRaw(),"sample"); S.sample=true; render(); }
+
+/* ---------- wiring ---------- */
+function openConnect(){ $("appsUrl").value=getUrl(); $("dlg").showModal(); }
+$("btnRefresh").addEventListener("click",()=>refreshFromSheet(false));
+$("btnConnect").addEventListener("click",openConnect);
+$("btnSample").addEventListener("click",loadSample);
+$("btnExcel").addEventListener("click",()=>$("fileExcel").click());
+$("fileExcel").addEventListener("change",e=>{ if(e.target.files[0]) loadExcel(e.target.files[0]); e.target.value=""; });
+$("dlgForm").addEventListener("submit",e=>{
+  if(e.submitter&&e.submitter.value==="save"){
+    const v=$("appsUrl").value.trim();
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec/.test(v)){ e.preventDefault(); $("appsUrl").setCustomValidity("Paste the Web App URL that ends in /exec"); $("appsUrl").reportValidity(); return; }
+    localStorage.setItem("kyaka_apps_script",v); setTimeout(()=>refreshFromSheet(false),50);
+  }
+});
+$("appsUrl").addEventListener("input",()=>$("appsUrl").setCustomValidity(""));
+render();
+if(getUrl()){ refreshFromSheet(false); setInterval(()=>{ if(!document.hidden&&!S.sample) refreshFromSheet(true); },AUTO_MS); }
+</script>
+
+</body>
+</html>
